@@ -15,44 +15,50 @@ const int HEIGHT = 720;
 
 Camera camera;
 
+bool firstMouse = true;
+float lastX = WIDTH / 2.0f;
+float lastY = HEIGHT / 2.0f;
+
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-void processInput(GLFWwindow* window)
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void processInput(GLFWwindow* window, float deltaTime)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
         glfwSetWindowShouldClose(window, true);
-    }
-
-    float speed = 2.5f * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        camera.Position += speed * camera.Front;
-    }
+        camera.ProcessKeyboard(0, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        camera.Position -= speed * camera.Front;
-    }
-
-    glm::vec3 right =
-        glm::normalize(
-            glm::cross(
-                camera.Front,
-                camera.Up));
+        camera.ProcessKeyboard(1, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        camera.Position -= right * speed;
-    }
+        camera.ProcessKeyboard(2, deltaTime);
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        camera.Position += right * speed;
-    }
+        camera.ProcessKeyboard(3, deltaTime);
 }
+
+
 
 int main()
 {
@@ -80,7 +86,8 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
-
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
     if (!gladLoadGLLoader(
         (GLADloadproc)glfwGetProcAddress))
     {
@@ -190,7 +197,7 @@ int main()
         lastFrame =
             currentFrame;
 
-        processInput(window);
+        processInput(window, deltaTime);
 
         glClearColor(
             0.1f,
