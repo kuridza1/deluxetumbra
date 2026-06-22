@@ -61,16 +61,8 @@ void setColor(GLuint shaderID, const glm::vec3& color)
         glGetUniformLocation(shaderID, "objectColor"),
         color.x, color.y, color.z);
 }
-
-void drawCube(GLuint shaderID)
+void drawCube()
 {
-    glUniformMatrix4fv(
-        glGetUniformLocation(shaderID, "model"),
-        1,
-        GL_FALSE,
-        glm::value_ptr(glm::mat4(1.0f))
-    );
-
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
@@ -81,7 +73,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    glfwWindowHint(GLFW_SAMPLES, 4);
     GLFWwindow* window =
         glfwCreateWindow(WIDTH, HEIGHT, "Cornell Box", nullptr, nullptr);
 
@@ -103,7 +95,7 @@ int main()
         glfwTerminate();
         return -1;
     }
-
+    glEnable(GL_MULTISAMPLE);
     glViewport(0, 0, WIDTH, HEIGHT);
     glEnable(GL_DEPTH_TEST);
 
@@ -184,10 +176,10 @@ int main()
 
         glm::vec3 lightSamples[4] =
         {
-            {-0.3f, 1.9f, -0.3f},
-            { 0.3f, 1.9f, -0.3f},
-            {-0.3f, 1.9f,  0.3f},
-            { 0.3f, 1.9f,  0.3f}
+            {-0.3f, 4.2f, -0.3f},
+            { 0.3f, 4.2f, -0.3f},
+            {-0.3f, 4.2f,  0.3f},
+            { 0.3f, 4.2f,  0.3f}
         };
 
         for (int i = 0; i < 4; i++)
@@ -211,35 +203,13 @@ int main()
         glBindVertexArray(VAO);
 
         // FLOOR
-        glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(5, 1, 5));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(shader.ID, glm::vec3(0.8f));
-        drawCube(shader.ID);
+        glm::mat4 model =
+            glm::translate(glm::mat4(1.0f),
+                glm::vec3(0.0f, -0.5f, 0.0f));
 
-        // LEFT (RED)
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 0, 0));
-        model = glm::scale(model, glm::vec3(1, 5, 5));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(shader.ID, glm::vec3(0.8f, 0.1f, 0.1f));
-        drawCube(shader.ID);
-
-        // RIGHT (GREEN)
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 0, 0));
-        model = glm::scale(model, glm::vec3(1, 5, 5));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(shader.ID, glm::vec3(0.1f, 0.8f, 0.1f));
-        drawCube(shader.ID);
-
-        // BACK
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -2.5f));
-        model = glm::scale(model, glm::vec3(5, 5, 1));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(shader.ID, glm::vec3(0.8f));
-        drawCube(shader.ID);
-
-        // CEILING
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, 0.0f));
-        model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+        model = glm::scale(
+            model,
+            glm::vec3(5.0f, 1.0f, 5.0f));
 
         glUniformMatrix4fv(
             glGetUniformLocation(shader.ID, "model"),
@@ -247,10 +217,147 @@ int main()
             GL_FALSE,
             glm::value_ptr(model));
 
-        setColor(shader.ID, glm::vec3(0.85f));
-        drawCube(shader.ID);
+        setColor(shader.ID, glm::vec3(0.8f));
+        drawCube();
+
+
+        // CEILING
+        model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(0.0f, 4.5f, 0.0f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(5.0f, 1.0f, 5.0f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID, glm::vec3(0.8f));
+        drawCube();
+
+
+        // LEFT WALL (RED)
+        model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(-2.5f, 2.0f, 0.0f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(1.0f, 5.0f, 5.0f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID,
+            glm::vec3(0.75f, 0.1f, 0.1f));
+
+        drawCube();
+
+
+        // RIGHT WALL (GREEN)
+        model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(2.5f, 2.0f, 0.0f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(1.0f, 5.0f, 5.0f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID,
+            glm::vec3(0.1f, 0.75f, 0.1f));
+
+        drawCube();
+
+
+        // BACK WALL
+        model = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(0.0f, 2.0f, -2.5f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(5.0f, 5.0f, 1.0f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID, glm::vec3(0.8f));
+        drawCube();
+
+
+        // SMALL BOX
+        model = glm::mat4(1.0f);
+
+        model = glm::translate(
+            model,
+            glm::vec3(-0.9f, 0.5f, 0.8f));
+
+        model = glm::rotate(
+            model,
+            glm::radians(-20.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(1.0f, 2.0f, 1.0f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID,
+            glm::vec3(0.85f));
+
+        drawCube();
+
+
+        // LARGE BOX
+        model = glm::mat4(1.0f);
+
+        model = glm::translate(
+            model,
+            glm::vec3(1.0f, 1.0f, -0.6f));
+
+        model = glm::rotate(
+            model,
+            glm::radians(18.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+
+        model = glm::scale(
+            model,
+            glm::vec3(1.3f, 3.0f, 1.3f));
+
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.ID, "model"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(model));
+
+        setColor(shader.ID,
+            glm::vec3(0.85f));
+
+        drawCube();
 
         glfwSwapBuffers(window);
+        glfwPollEvents();
         glfwPollEvents();
     }
 

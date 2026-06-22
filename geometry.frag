@@ -15,6 +15,8 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
+    if(dot(norm, viewDir) < 0.0)
+        norm = -norm;
     vec3 result = vec3(0.0);
 
     for(int i = 0; i < 4; i++)

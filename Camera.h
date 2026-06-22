@@ -19,7 +19,7 @@ public:
     float MouseSensitivity;
     float Fov;
 
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f));
+    Camera(glm::vec3 position = glm::vec3(0.0f, 2.0f, 7.0f));
 
     glm::mat4 GetViewMatrix() const;
     glm::mat4 GetProjectionMatrix(float aspect) const;
