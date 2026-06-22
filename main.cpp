@@ -61,6 +61,7 @@ void setColor(GLuint shaderID, const glm::vec3& color)
         glGetUniformLocation(shaderID, "objectColor"),
         color.x, color.y, color.z);
 }
+
 void drawCube()
 {
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -73,7 +74,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 6);
     GLFWwindow* window =
         glfwCreateWindow(WIDTH, HEIGHT, "Cornell Box", nullptr, nullptr);
 
@@ -97,7 +98,6 @@ int main()
     }
     glEnable(GL_MULTISAMPLE);
     glViewport(0, 0, WIDTH, HEIGHT);
-    glEnable(GL_DEPTH_TEST);
 
     float vertices[] =
     {
@@ -145,7 +145,41 @@ int main()
         -0.5f, 0.5f,-0.5f,    0.0f,1.0f,0.0f
     };
 
-    Shader shader("geometry.vert", "geometry.frag");
+    // Quad for lighting pass
+    GLuint quadVAO = 0;
+    GLuint quadVBO;
+
+    float quadVertices[] = {
+        // pos      // uv
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+
+    glBindVertexArray(quadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    // position
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // uv
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+
+    Shader geometryShader("geometry.vert", "geometry.frag");
+    Shader lightingShader("lighting.vert", "lighting.frag");
 
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -161,6 +195,64 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // G-Buffer setup
+    GLuint gBuffer;
+    glGenFramebuffers(1, &gBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+    GLuint gPosition, gNormal, gAlbedo;
+
+    // Position texture
+    glGenTextures(1, &gPosition);
+    glBindTexture(GL_TEXTURE_2D, gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+    // Normal texture
+    glGenTextures(1, &gNormal);
+    glBindTexture(GL_TEXTURE_2D, gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+    // Albedo texture
+    glGenTextures(1, &gAlbedo);
+    glBindTexture(GL_TEXTURE_2D, gAlbedo);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+
+    // Depth renderbuffer
+    GLuint rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+    GLuint attachments[3] = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2
+    };
+    glDrawBuffers(3, attachments);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "GBuffer not complete!\n";
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Light positions (same as original)
+    glm::vec3 lightSamples[4] = {
+        {-0.3f, 4.2f, -0.3f},
+        { 0.3f, 4.2f, -0.3f},
+        {-0.3f, 4.2f,  0.3f},
+        { 0.3f, 4.2f,  0.3f}
+    };
+
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
@@ -169,195 +261,112 @@ int main()
 
         processInput(window, deltaTime);
 
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        // GEOMETRY PASS
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+        glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.use();
+        geometryShader.use();
 
-        glm::vec3 lightSamples[4] =
-        {
-            {-0.3f, 4.2f, -0.3f},
-            { 0.3f, 4.2f, -0.3f},
-            {-0.3f, 4.2f,  0.3f},
-            { 0.3f, 4.2f,  0.3f}
-        };
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 projection = camera.GetProjectionMatrix((float)WIDTH / HEIGHT);
 
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+        glBindVertexArray(VAO);
+
+        // FLOOR
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+        model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.8f));
+        drawCube();
+
+        // CEILING
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f));
+        model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.8f));
+        drawCube();
+
+        // LEFT WALL (RED)
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.0f, 5.0f, 5.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.75f, 0.1f, 0.1f));
+        drawCube();
+
+        // RIGHT WALL (GREEN)
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.0f, 5.0f, 5.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.1f, 0.75f, 0.1f));
+        drawCube();
+
+        // BACK WALL
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f));
+        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 1.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.8f));
+        drawCube();
+
+        // SMALL BOX
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-0.9f, 0.5f, 0.8f));
+        model = glm::rotate(model, glm::radians(-20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.0f, 2.0f, 1.0f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.85f));
+        drawCube();
+
+        // LARGE BOX
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(1.0f, 1.0f, -0.6f));
+        model = glm::rotate(model, glm::radians(18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(1.3f, 3.0f, 1.3f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(0.85f));
+        drawCube();
+
+        // LIGHTING PASS
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        lightingShader.use();
+
+        glUniform1i(glGetUniformLocation(lightingShader.ID, "gPosition"), 0);
+        glUniform1i(glGetUniformLocation(lightingShader.ID, "gNormal"), 1);
+        glUniform1i(glGetUniformLocation(lightingShader.ID, "gAlbedo"), 2);
+
+        // Set light positions
         for (int i = 0; i < 4; i++)
         {
-            std::string name = "lights[" + std::to_string(i) + "]";
-            glUniform3f(glGetUniformLocation(shader.ID, name.c_str()),
+            std::string name = "lightPos[" + std::to_string(i) + "]";
+            glUniform3f(glGetUniformLocation(lightingShader.ID, name.c_str()),
                 lightSamples[i].x,
                 lightSamples[i].y,
                 lightSamples[i].z);
         }
 
-        glUniform3f(glGetUniformLocation(shader.ID, "viewPos"),
+        // Set view position
+        glUniform3f(glGetUniformLocation(lightingShader.ID, "viewPos"),
             camera.Position.x, camera.Position.y, camera.Position.z);
 
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = camera.GetProjectionMatrix((float)WIDTH / HEIGHT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
 
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
 
-        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gAlbedo);
 
-        // FLOOR
-        glm::mat4 model =
-            glm::translate(glm::mat4(1.0f),
-                glm::vec3(0.0f, -0.5f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(5.0f, 1.0f, 5.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID, glm::vec3(0.8f));
-        drawCube();
-
-
-        // CEILING
-        model = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(0.0f, 4.5f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(5.0f, 1.0f, 5.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID, glm::vec3(0.8f));
-        drawCube();
-
-
-        // LEFT WALL (RED)
-        model = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(-2.5f, 2.0f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(1.0f, 5.0f, 5.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID,
-            glm::vec3(0.75f, 0.1f, 0.1f));
-
-        drawCube();
-
-
-        // RIGHT WALL (GREEN)
-        model = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(2.5f, 2.0f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(1.0f, 5.0f, 5.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID,
-            glm::vec3(0.1f, 0.75f, 0.1f));
-
-        drawCube();
-
-
-        // BACK WALL
-        model = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(0.0f, 2.0f, -2.5f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(5.0f, 5.0f, 1.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID, glm::vec3(0.8f));
-        drawCube();
-
-
-        // SMALL BOX
-        model = glm::mat4(1.0f);
-
-        model = glm::translate(
-            model,
-            glm::vec3(-0.9f, 0.5f, 0.8f));
-
-        model = glm::rotate(
-            model,
-            glm::radians(-20.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(1.0f, 2.0f, 1.0f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID,
-            glm::vec3(0.85f));
-
-        drawCube();
-
-
-        // LARGE BOX
-        model = glm::mat4(1.0f);
-
-        model = glm::translate(
-            model,
-            glm::vec3(1.0f, 1.0f, -0.6f));
-
-        model = glm::rotate(
-            model,
-            glm::radians(18.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
-
-        model = glm::scale(
-            model,
-            glm::vec3(1.3f, 3.0f, 1.3f));
-
-        glUniformMatrix4fv(
-            glGetUniformLocation(shader.ID, "model"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(model));
-
-        setColor(shader.ID,
-            glm::vec3(0.85f));
-
-        drawCube();
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
         glfwPollEvents();
     }
 

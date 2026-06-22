@@ -141,11 +141,13 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="basic.frag" />
+    <None Include="basic.vert" />
     <None Include="geometry.frag" />
     <None Include="geometry.vert" />
+    <None Include="lighting.frag" />
+    <None Include="lighting.vert" />
     <None Include="packages.config" />
-    <None Include="shaders\basic.frag" />
-    <None Include="shaders\basic.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
