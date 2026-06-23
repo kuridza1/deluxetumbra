@@ -196,13 +196,13 @@ int main()
     glEnableVertexAttribArray(1);
 
     // G-Buffer setup
+    GLuint gPosition, gNormal, gAlbedo, gEmission;
+
     GLuint gBuffer;
     glGenFramebuffers(1, &gBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-    GLuint gPosition, gNormal, gAlbedo;
-
-    // Position texture
+    // Position
     glGenTextures(1, &gPosition);
     glBindTexture(GL_TEXTURE_2D, gPosition);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
@@ -210,7 +210,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
-    // Normal texture
+    // Normal
     glGenTextures(1, &gNormal);
     glBindTexture(GL_TEXTURE_2D, gNormal);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
@@ -218,7 +218,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
-    // Albedo texture
+    // Albedo
     glGenTextures(1, &gAlbedo);
     glBindTexture(GL_TEXTURE_2D, gAlbedo);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -226,32 +226,38 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
 
-    // Depth renderbuffer
+    // Emission
+    glGenTextures(1, &gEmission);
+    glBindTexture(GL_TEXTURE_2D, gEmission);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gEmission, 0);
+
+    // Depth
     GLuint rboDepth;
     glGenRenderbuffers(1, &rboDepth);
     glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
-    GLuint attachments[3] = {
+    GLuint attachments[4] =
+    {
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
-        GL_COLOR_ATTACHMENT2
+        GL_COLOR_ATTACHMENT2,
+        GL_COLOR_ATTACHMENT3
     };
-    glDrawBuffers(3, attachments);
+
+    glDrawBuffers(4, attachments);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "GBuffer not complete!\n";
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // Light positions (same as original)
-    glm::vec3 lightSamples[4] = {
-        {-0.3f, 4.2f, -0.3f},
-        { 0.3f, 4.2f, -0.3f},
-        {-0.3f, 4.2f,  0.3f},
-        { 0.3f, 4.2f,  0.3f}
-    };
+    glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -276,19 +282,37 @@ int main()
 
         glBindVertexArray(VAO);
 
+        auto setEmission = [&](float e)
+            {
+                glUniform1f(glGetUniformLocation(geometryShader.ID, "emission"), e);
+            };
+
         // FLOOR
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-        model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+        setEmission(0.0f);
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -0.5f, 0));
+        model = glm::scale(model, glm::vec3(5, 1, 5));
         glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
         setColor(geometryShader.ID, glm::vec3(0.8f));
         drawCube();
 
         // CEILING
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f));
-        model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 4.5f, 0));
+        model = glm::scale(model, glm::vec3(5, 1, 5));
         glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
         setColor(geometryShader.ID, glm::vec3(0.8f));
         drawCube();
+
+        // LIGHT PANEL (EMISSIVE)
+        setEmission(15.0f);
+        model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3.99f, 0));
+        model = glm::scale(model, glm::vec3(1.2f, 0.02f, 1.2f));
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        setColor(geometryShader.ID, glm::vec3(1.0f));
+        drawCube();
+
+        // reset emission
+        setEmission(0.0f);
+
 
         // LEFT WALL (RED)
         model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f));
@@ -339,18 +363,11 @@ int main()
         glUniform1i(glGetUniformLocation(lightingShader.ID, "gPosition"), 0);
         glUniform1i(glGetUniformLocation(lightingShader.ID, "gNormal"), 1);
         glUniform1i(glGetUniformLocation(lightingShader.ID, "gAlbedo"), 2);
+        glUniform1i(glGetUniformLocation(lightingShader.ID, "gEmission"), 3);
 
-        // Set light positions
-        for (int i = 0; i < 4; i++)
-        {
-            std::string name = "lightPos[" + std::to_string(i) + "]";
-            glUniform3f(glGetUniformLocation(lightingShader.ID, name.c_str()),
-                lightSamples[i].x,
-                lightSamples[i].y,
-                lightSamples[i].z);
-        }
+        glUniform3f(glGetUniformLocation(lightingShader.ID, "lightPos"),
+            lightPos.x, lightPos.y, lightPos.z);
 
-        // Set view position
         glUniform3f(glGetUniformLocation(lightingShader.ID, "viewPos"),
             camera.Position.x, camera.Position.y, camera.Position.z);
 
@@ -362,6 +379,9 @@ int main()
 
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gAlbedo);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, gEmission);
 
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
