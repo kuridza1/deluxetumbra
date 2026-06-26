@@ -32,5 +32,3 @@ build/
 *.cache
 *.tmp
 
-packages/
-external/

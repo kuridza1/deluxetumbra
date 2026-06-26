@@ -128,6 +128,34 @@ Shader::Shader(const char* vertexPath,
     glDeleteShader(fragmentShader);
 }
 
+Shader::Shader(const char* computePath)
+{
+    std::ifstream file(computePath);
+
+    std::stringstream stream;
+    stream << file.rdbuf();
+
+    std::string code = stream.str();
+    const char* src = code.c_str();
+
+    GLuint shader =
+        glCreateShader(GL_COMPUTE_SHADER);
+
+    glShaderSource(shader,
+        1,
+        &src,
+        nullptr);
+
+    glCompileShader(shader);
+
+    ID = glCreateProgram();
+
+    glAttachShader(ID, shader);
+    glLinkProgram(ID);
+
+    glDeleteShader(shader);
+}
+
 void Shader::use() const
 {
     glUseProgram(ID);

@@ -104,14 +104,41 @@ bool Renderer::init(int width, int height)
     // Shaderi
     geometryShader = new Shader("geometry.vert", "geometry.frag");
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
-
+    shadowShader = new Shader("shadow.comp");
     // G-buffer
     if (!gbuffer.init(width, height))
     {
         std::cerr << "GBuffer init failed\n";
         return false;
     }
+    glGenTextures(1, &shadowTexture);
 
+    glBindTexture(
+        GL_TEXTURE_2D,
+        shadowTexture);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_R32F,
+        width,
+        height,
+        0,
+        GL_RED,
+        GL_FLOAT,
+        nullptr);
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST);
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
     return true;
 }
 
@@ -119,7 +146,15 @@ void Renderer::destroy()
 {
     delete geometryShader; geometryShader = nullptr;
     delete lightingShader; lightingShader = nullptr;
+    delete shadowShader;
+    shadowShader = nullptr;
 
+    if (shadowTexture)
+    {
+        glDeleteTextures(
+            1,
+            &shadowTexture);
+    }
     if (VAO)     { glDeleteVertexArrays(1, &VAO);     VAO     = 0; }
     if (VBO)     { glDeleteBuffers(1, &VBO);           VBO     = 0; }
     if (quadVAO) { glDeleteVertexArrays(1, &quadVAO); quadVAO = 0; }
@@ -221,6 +256,7 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 }
 
 
+
 void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -233,7 +269,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gNormal"),   1);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gAlbedo"),   2);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gEmission"), 3);
-
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"),
                 lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"),
@@ -243,8 +279,22 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, gbuffer.gAlbedo);
     glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, gbuffer.gEmission);
-
+    glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+}
+
+void Renderer::shadowPass(const glm::vec3& lightPos)
+{
+    shadowShader->use();
+    glUniform3f(glGetUniformLocation(shadowShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
+
+    glUniform1i(glGetUniformLocation(shadowShader->ID, "gPosition"), 0);
+
+    glBindImageTexture(1, shadowTexture,0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+    glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }

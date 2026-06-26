@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="external\glad\src\glad.c" />
     <ClCompile Include="GBuffer.cpp" />
@@ -151,11 +152,14 @@
     <None Include="lighting.frag" />
     <None Include="lighting.vert" />
     <None Include="packages.config" />
+    <None Include="shadow.comp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="InputHandler.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>

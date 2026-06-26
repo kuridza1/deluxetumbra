@@ -11,6 +11,7 @@ uniform sampler2D gEmission;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
+uniform sampler2D shadowMask;
 
 void main()
 {
@@ -42,6 +43,9 @@ void main()
     result += (diffuse + specular) * attenuation * 8.0;
 
     result += emission;
+    float shadow =
+    texture(shadowMask, TexCoords).r;
 
+    result *= shadow;
     FragColor = vec4(result, 1.0);
 }
