@@ -1,83 +1,24 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <glm/glm.hpp>
 #include <iostream>
 
-#include "Shader.h"
 #include "Camera.h"
+#include "InputHandler.h"
+#include "Renderer.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-const int WIDTH = 1280;
+const int WIDTH  = 1280;
 const int HEIGHT = 720;
-
-Camera camera;
-
-bool firstMouse = true;
-float lastX = WIDTH / 2.0f;
-float lastY = HEIGHT / 2.0f;
-
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    if (firstMouse)
-    {
-        lastX = (float)xpos;
-        lastY = (float)ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = (float)xpos - lastX;
-    float yoffset = lastY - (float)ypos;
-
-    lastX = (float)xpos;
-    lastY = (float)ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
-}
-
-void processInput(GLFWwindow* window, float dt)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(0, dt);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(1, dt);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(2, dt);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(3, dt);
-}
-
-void setColor(GLuint shaderID, const glm::vec3& color)
-{
-    glUniform3f(
-        glGetUniformLocation(shaderID, "objectColor"),
-        color.x, color.y, color.z);
-}
-
-void drawCube()
-{
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-}
 
 int main()
 {
     glfwInit();
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 6);
-    GLFWwindow* window =
-        glfwCreateWindow(WIDTH, HEIGHT, "Cornell Box", nullptr, nullptr);
 
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Cornell Box", nullptr, nullptr);
     if (!window)
     {
         std::cerr << "Window creation failed\n";
@@ -87,311 +28,50 @@ int main()
 
     glfwMakeContextCurrent(window);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
-
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cerr << "GLAD init failed\n";
         glfwTerminate();
         return -1;
     }
+
     glEnable(GL_MULTISAMPLE);
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    float vertices[] =
+    Camera       camera;
+    InputHandler input;
+    Renderer     renderer;
+
+    input.init(window, &camera, WIDTH, HEIGHT);
+
+    if (!renderer.init(WIDTH, HEIGHT))
     {
-        // pos                // normal
-        -0.5f,-0.5f,-0.5f,    0.0f,0.0f,-1.0f,
-         0.5f,-0.5f,-0.5f,    0.0f,0.0f,-1.0f,
-         0.5f, 0.5f,-0.5f,    0.0f,0.0f,-1.0f,
-         0.5f, 0.5f,-0.5f,    0.0f,0.0f,-1.0f,
-        -0.5f, 0.5f,-0.5f,    0.0f,0.0f,-1.0f,
-        -0.5f,-0.5f,-0.5f,    0.0f,0.0f,-1.0f,
+        glfwTerminate();
+        return -1;
+    }
 
-        -0.5f,-0.5f, 0.5f,    0.0f,0.0f,1.0f,
-         0.5f,-0.5f, 0.5f,    0.0f,0.0f,1.0f,
-         0.5f, 0.5f, 0.5f,    0.0f,0.0f,1.0f,
-         0.5f, 0.5f, 0.5f,    0.0f,0.0f,1.0f,
-        -0.5f, 0.5f, 0.5f,    0.0f,0.0f,1.0f,
-        -0.5f,-0.5f, 0.5f,    0.0f,0.0f,1.0f,
+    const glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
 
-        -0.5f, 0.5f, 0.5f,   -1.0f,0.0f,0.0f,
-        -0.5f, 0.5f,-0.5f,   -1.0f,0.0f,0.0f,
-        -0.5f,-0.5f,-0.5f,   -1.0f,0.0f,0.0f,
-        -0.5f,-0.5f,-0.5f,   -1.0f,0.0f,0.0f,
-        -0.5f,-0.5f, 0.5f,   -1.0f,0.0f,0.0f,
-        -0.5f, 0.5f, 0.5f,   -1.0f,0.0f,0.0f,
-
-         0.5f, 0.5f, 0.5f,    1.0f,0.0f,0.0f,
-         0.5f, 0.5f,-0.5f,    1.0f,0.0f,0.0f,
-         0.5f,-0.5f,-0.5f,    1.0f,0.0f,0.0f,
-         0.5f,-0.5f,-0.5f,    1.0f,0.0f,0.0f,
-         0.5f,-0.5f, 0.5f,    1.0f,0.0f,0.0f,
-         0.5f, 0.5f, 0.5f,    1.0f,0.0f,0.0f,
-
-        -0.5f,-0.5f,-0.5f,    0.0f,-1.0f,0.0f,
-         0.5f,-0.5f,-0.5f,    0.0f,-1.0f,0.0f,
-         0.5f,-0.5f, 0.5f,    0.0f,-1.0f,0.0f,
-         0.5f,-0.5f, 0.5f,    0.0f,-1.0f,0.0f,
-        -0.5f,-0.5f, 0.5f,    0.0f,-1.0f,0.0f,
-        -0.5f,-0.5f,-0.5f,    0.0f,-1.0f,0.0f,
-
-        -0.5f, 0.5f,-0.5f,    0.0f,1.0f,0.0f,
-         0.5f, 0.5f,-0.5f,    0.0f,1.0f,0.0f,
-         0.5f, 0.5f, 0.5f,    0.0f,1.0f,0.0f,
-         0.5f, 0.5f, 0.5f,    0.0f,1.0f,0.0f,
-        -0.5f, 0.5f, 0.5f,    0.0f,1.0f,0.0f,
-        -0.5f, 0.5f,-0.5f,    0.0f,1.0f,0.0f
-    };
-
-    // Quad for lighting pass
-    GLuint quadVAO = 0;
-    GLuint quadVBO;
-
-    float quadVertices[] = {
-        // pos      // uv
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
-    };
-
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-
-    glBindVertexArray(quadVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-    // position
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // uv
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-
-    Shader geometryShader("geometry.vert", "geometry.frag");
-    Shader lightingShader("lighting.vert", "lighting.frag");
-
-    GLuint VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // G-Buffer setup
-    GLuint gPosition, gNormal, gAlbedo, gEmission;
-
-    GLuint gBuffer;
-    glGenFramebuffers(1, &gBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-
-    // Position
-    glGenTextures(1, &gPosition);
-    glBindTexture(GL_TEXTURE_2D, gPosition);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-
-    // Normal
-    glGenTextures(1, &gNormal);
-    glBindTexture(GL_TEXTURE_2D, gNormal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-
-    // Albedo
-    glGenTextures(1, &gAlbedo);
-    glBindTexture(GL_TEXTURE_2D, gAlbedo);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
-
-    // Emission
-    glGenTextures(1, &gEmission);
-    glBindTexture(GL_TEXTURE_2D, gEmission);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gEmission, 0);
-
-    // Depth
-    GLuint rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-
-    GLuint attachments[4] =
-    {
-        GL_COLOR_ATTACHMENT0,
-        GL_COLOR_ATTACHMENT1,
-        GL_COLOR_ATTACHMENT2,
-        GL_COLOR_ATTACHMENT3
-    };
-
-    glDrawBuffers(4, attachments);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "GBuffer not complete!\n";
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
-
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
 
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = (float)glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        deltaTime  = currentFrame - lastFrame;
+        lastFrame  = currentFrame;
 
-        processInput(window, deltaTime);
+        input.processKeyboard(window, deltaTime);
 
-        // GEOMETRY PASS
-        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-        glEnable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        geometryShader.use();
-
-        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 view       = camera.GetViewMatrix();
         glm::mat4 projection = camera.GetProjectionMatrix((float)WIDTH / HEIGHT);
 
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-        glBindVertexArray(VAO);
-
-        auto setEmission = [&](float e)
-            {
-                glUniform1f(glGetUniformLocation(geometryShader.ID, "emission"), e);
-            };
-
-        // FLOOR
-        setEmission(0.0f);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -0.5f, 0));
-        model = glm::scale(model, glm::vec3(5, 1, 5));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.8f));
-        drawCube();
-
-        // CEILING
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 4.5f, 0));
-        model = glm::scale(model, glm::vec3(5, 1, 5));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.8f));
-        drawCube();
-
-        // LIGHT PANEL (EMISSIVE)
-        setEmission(15.0f);
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3.99f, 0));
-        model = glm::scale(model, glm::vec3(1.2f, 0.02f, 1.2f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(1.0f));
-        drawCube();
-
-        // reset emission
-        setEmission(0.0f);
-
-
-        // LEFT WALL (RED)
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(1.0f, 5.0f, 5.0f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.75f, 0.1f, 0.1f));
-        drawCube();
-
-        // RIGHT WALL (GREEN)
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(1.0f, 5.0f, 5.0f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.1f, 0.75f, 0.1f));
-        drawCube();
-
-        // BACK WALL
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f));
-        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 1.0f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.8f));
-        drawCube();
-
-        // SMALL BOX
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-0.9f, 0.5f, 0.8f));
-        model = glm::rotate(model, glm::radians(-20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(1.0f, 2.0f, 1.0f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.85f));
-        drawCube();
-
-        // LARGE BOX
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(1.0f, 1.0f, -0.6f));
-        model = glm::rotate(model, glm::radians(18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(1.3f, 3.0f, 1.3f));
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader.ID, glm::vec3(0.85f));
-        drawCube();
-
-        // LIGHTING PASS
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        lightingShader.use();
-
-        glUniform1i(glGetUniformLocation(lightingShader.ID, "gPosition"), 0);
-        glUniform1i(glGetUniformLocation(lightingShader.ID, "gNormal"), 1);
-        glUniform1i(glGetUniformLocation(lightingShader.ID, "gAlbedo"), 2);
-        glUniform1i(glGetUniformLocation(lightingShader.ID, "gEmission"), 3);
-
-        glUniform3f(glGetUniformLocation(lightingShader.ID, "lightPos"),
-            lightPos.x, lightPos.y, lightPos.z);
-
-        glUniform3f(glGetUniformLocation(lightingShader.ID, "viewPos"),
-            camera.Position.x, camera.Position.y, camera.Position.z);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, gPosition);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, gNormal);
-
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, gAlbedo);
-
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, gEmission);
-
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        renderer.geometryPass(view, projection);
+        renderer.lightingPass(lightPos, camera.Position);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
 
     glfwTerminate();
     return 0;
