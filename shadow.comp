@@ -2,26 +2,65 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
-layout(binding = 0)
-uniform sampler2D gPosition;
-
-layout(r32f, binding = 1)
-uniform image2D shadowMask;
+layout(binding = 0) uniform sampler2D gPosition;
+layout(r32f, binding = 1) uniform image2D shadowMask;
 
 uniform vec3 lightPos;
 
-void main()
-{
+// Occluder boksovi — treba da ih pošalješ kao uniforme
+// (ovde su hardkodirani radi primera)
+struct Box {
+    vec3 bmin;
+    vec3 bmax;
+};
+
+// Ray-AABB intersection (slab metoda)
+bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit) {
+    vec3 invRd = 1.0 / rd;
+    vec3 t0 = (bmin - ro) * invRd;
+    vec3 t1 = (bmax - ro) * invRd;
+    vec3 tMin = min(t0, t1);
+    vec3 tMax = max(t0, t1);
+    float tEnter = max(max(tMin.x, tMin.y), tMin.z);
+    float tExit  = min(min(tMax.x, tMax.y), tMax.z);
+    tHit = tEnter;
+    return tExit > max(tEnter, 0.0);
+}
+
+void main() {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size  = imageSize(shadowMask);
+    if (pixel.x >= size.x || pixel.y >= size.y) return;
 
-    ivec2 size = imageSize(shadowMask);
+    vec3 fragPos = texelFetch(gPosition, pixel, 0).xyz;
 
-    if (pixel.x >= size.x || pixel.y >= size.y)
-        return;
+    vec3 toLight = lightPos - fragPos;
+    float lightDist = length(toLight);
+    vec3 shadowRayDir = toLight / lightDist;
 
-    vec3 position = texelFetch(gPosition, pixel, 0).xyz;
+    // Offset da se izbegne self-intersection
+    vec3 shadowRayOrigin = fragPos + shadowRayDir * 0.01;
 
-    float visibility = float(pixel.x) / float(size.x);
+    float visibility = 1.0;
 
-    imageStore( shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));
+    // Testiraj svaki occluder
+    // Kutija 1 (mali boks) — prilagodi dimenzijama iz Renderer.cpp
+    float tHit;
+    if (intersectAABB(shadowRayOrigin, shadowRayDir,
+                      vec3(-1.45, 0.0, 0.3),  // bmin
+                      vec3(-0.35, 2.0, 1.3),  // bmax
+                      tHit) && tHit < lightDist) {
+        visibility = 0.0;
+    }
+
+    // Kutija 2 (veliki boks)
+    if (visibility > 0.0 &&
+        intersectAABB(shadowRayOrigin, shadowRayDir,
+                      vec3(0.35, 0.0, -1.25),
+                      vec3(1.65, 3.0, 0.05),
+                      tHit) && tHit < lightDist) {
+        visibility = 0.0;
+    }
+
+    imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));
 }

@@ -31,7 +31,3 @@ build/
 *.opendb
 *.cache
 *.tmp
-
-packages/**/build/
-
-!packages/glfw.3.4.0/build/native/glfw.targets
