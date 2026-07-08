@@ -209,39 +209,39 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 
     // Floor
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)),
-                   glm::vec3(5.0f, 1.0f, 5.0f));
+                   glm::vec3(5.0f, 0.02f, 5.0f));
     drawObject(m, glm::vec3(0.8f));
 
     // Ceiling
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)),
-                   glm::vec3(5.0f, 1.0f, 5.0f));
+                   glm::vec3(5.0f, 0.02f, 5.0f));
     drawObject(m, glm::vec3(0.8f));
 
     // Light panel (emissive)
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.99f, 0.0f)),
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)),
                    glm::vec3(1.2f, 0.02f, 1.2f));
-    drawObject(m, glm::vec3(1.0f), 15.0f);
+    drawObject(m, glm::vec3(1.0f), 0.25f);
 
     // Left wall (red)
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)),
-                   glm::vec3(1.0f, 5.0f, 5.0f));
+                   glm::vec3(0.02f, 5.0f, 5.0f));
     drawObject(m, glm::vec3(0.75f, 0.1f, 0.1f));
 
     // Right wall (green)
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)),
-                   glm::vec3(1.0f, 5.0f, 5.0f));
+                   glm::vec3(0.02f, 5.0f, 5.0f));
     drawObject(m, glm::vec3(0.1f, 0.75f, 0.1f));
 
     // Back wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)),
-                   glm::vec3(5.0f, 5.0f, 1.0f));
+                   glm::vec3(5.0f, 5.0f, 0.02f));
     drawObject(m, glm::vec3(0.8f));
 
     // Small box
     m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(-0.9f, 0.5f, 0.8f));
-    m = glm::rotate(m, glm::radians(-20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.0f, 2.0f, 1.0f));
+    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.2f));
+    m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::scale(m, glm::vec3(1.5f, 1.5f, 1.5f));
 
     smallBoxModel = m;
 
@@ -249,8 +249,8 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 
     // Large box
     m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(1.0f, 1.0f, -0.6f));
-    m = glm::rotate(m, glm::radians(18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
+    m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
 
 	largeBoxModel = m;
@@ -278,6 +278,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
+    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.95f, 0.8f);
 
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);

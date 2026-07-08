@@ -27,9 +27,7 @@ bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit) {
 bool intersectBox( vec3 rayOrigin, vec3 rayDir, mat4 model, out float tHit){
     mat4 invModel = inverse(model);
     vec3 localOrigin = (invModel * vec4(rayOrigin, 1.0)).xyz;
-
     vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
-
     return intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), tHit);
 }
 
@@ -53,13 +51,13 @@ void main() {
     float tHit;
     if (intersectBox(shadowRayOrigin, shadowRayDir, smallBoxModel, tHit) && tHit < lightDist)
     {
-        visibility = 0.35;
+        visibility = 0.15;
     }
 
     // Large box
-    if (visibility > 0.0 && intersectBox(shadowRayOrigin, shadowRayDir, largeBoxModel, tHit))
+    if (visibility > 0.0 && intersectBox(shadowRayOrigin, shadowRayDir, largeBoxModel, tHit) && tHit < lightDist)
     {
-        visibility = 0.35;
+        visibility = 0.15;
     }
 
     imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));
