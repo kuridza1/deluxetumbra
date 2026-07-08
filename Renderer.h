@@ -12,21 +12,13 @@ public:
     bool init(int width, int height);
     void destroy();
 
-    void geometryPass(
-        const glm::mat4& view,
-        const glm::mat4& projection);
-
-    void shadowPass(
-        const glm::vec3& lightPos);
-
-    void lightingPass(
-        const glm::vec3& lightPos,
-        const glm::vec3& viewPos);
+    void geometryPass(const glm::mat4& view, const glm::mat4& projection);
+    void shadowPass(const glm::vec3& lightPos);
+    void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
 
 private:
     void drawCube();
-    void setColor(GLuint shaderID,
-        const glm::vec3& color);
+    void setColor(GLuint shaderID, const glm::vec3& color);
     void setEmission(float e);
 
     GLuint VAO = 0;
@@ -37,6 +29,9 @@ private:
 
     int screenWidth = 0;
     int screenHeight = 0;
+
+    glm::mat4 smallBoxModel;
+	glm::mat4 largeBoxModel;
 
     Shader* geometryShader = nullptr;
     Shader* lightingShader = nullptr;

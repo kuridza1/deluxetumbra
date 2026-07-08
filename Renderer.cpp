@@ -242,6 +242,9 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
     m = glm::translate(m, glm::vec3(-0.9f, 0.5f, 0.8f));
     m = glm::rotate(m, glm::radians(-20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.0f, 2.0f, 1.0f));
+
+    smallBoxModel = m;
+
     drawObject(m, glm::vec3(0.85f));
 
     // Large box
@@ -249,6 +252,9 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
     m = glm::translate(m, glm::vec3(1.0f, 1.0f, -0.6f));
     m = glm::rotate(m, glm::radians(18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
+
+	largeBoxModel = m;
+
     drawObject(m, glm::vec3(0.85f));
 
     glBindVertexArray(0);
@@ -270,10 +276,8 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gAlbedo"),   2);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gEmission"), 3);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
-    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"),
-                lightPos.x, lightPos.y, lightPos.z);
-    glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"),
-                viewPos.x, viewPos.y, viewPos.z);
+    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
 
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
@@ -288,12 +292,15 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
 void Renderer::shadowPass(const glm::vec3& lightPos)
 {
     shadowShader->use();
+
+	glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, "smallBoxModel"), 1, GL_FALSE, glm::value_ptr(smallBoxModel));
+    glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, "largeBoxModel"), 1, GL_FALSE, glm::value_ptr(largeBoxModel));
+
     glUniform3f(glGetUniformLocation(shadowShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
 
     glUniform1i(glGetUniformLocation(shadowShader->ID, "gPosition"), 0);
-
     glBindImageTexture(1, shadowTexture,0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

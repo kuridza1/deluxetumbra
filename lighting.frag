@@ -46,6 +46,6 @@ void main()
     float shadow =
     texture(shadowMask, TexCoords).r;
 
-    result *= shadow;
+    result = result * mix(0.3, 1.0, shadow);
     FragColor = vec4(result, 1.0);
 }
