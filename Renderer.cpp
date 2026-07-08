@@ -181,6 +181,7 @@ void Renderer::drawCube()
 
 void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 {
+    shadowObjects.clear();
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer.FBO);
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -194,16 +195,18 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 
     glBindVertexArray(VAO);
 
-    auto drawObject = [&](const glm::mat4& model,
-                          const glm::vec3& color,
-                          float emission = 0.0f)
-    {
-        setEmission(emission);
-        glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"),
-                           1, GL_FALSE, glm::value_ptr(model));
-        setColor(geometryShader->ID, color);
-        drawCube();
-    };
+    auto drawObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f)
+        {
+            shadowObjects.push_back({ model });
+
+            setEmission(emission);
+
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+            setColor(geometryShader->ID, color);
+
+            drawCube();
+        };
 
     glm::mat4 m;
 
@@ -239,11 +242,9 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 
     // Small box
     m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.2f));
+    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
     m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.5f, 1.5f, 1.5f));
-
-    smallBoxModel = m;
 
     drawObject(m, glm::vec3(0.85f));
 
@@ -253,7 +254,13 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
     m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
 
-	largeBoxModel = m;
+    drawObject(m, glm::vec3(0.85f));
+
+    // Smallest box
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
+    m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
 
     drawObject(m, glm::vec3(0.85f));
 
@@ -294,8 +301,13 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
 {
     shadowShader->use();
 
-	glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, "smallBoxModel"), 1, GL_FALSE, glm::value_ptr(smallBoxModel));
-    glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, "largeBoxModel"), 1, GL_FALSE, glm::value_ptr(largeBoxModel));
+    int count = shadowObjects.size();
+    glUniform1i(glGetUniformLocation(shadowShader->ID, "objectCount"), count);
+    for (int i = 0; i < count; i++)
+    {
+        std::string name = "objectModels[" + std::to_string(i) + "]";
+        glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(shadowObjects[i].model));
+    }
 
     glUniform3f(glGetUniformLocation(shadowShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glActiveTexture(GL_TEXTURE0);

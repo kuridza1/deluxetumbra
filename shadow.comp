@@ -1,4 +1,5 @@
 #version 450 core
+#define MAX_OBJECTS 32
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
@@ -7,9 +8,8 @@ layout(r32f, binding = 1) uniform image2D shadowMask;
 
 uniform vec3 lightPos;
 
-uniform mat4 smallBoxModel;
-uniform mat4 largeBoxModel;
-
+uniform int objectCount;
+uniform mat4 objectModels[MAX_OBJECTS];
 
 // Ray-AABB intersection (slab metoda)
 bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit) {
@@ -47,17 +47,14 @@ void main() {
 
     float visibility = 1.0;
 
-    // Small box
     float tHit;
-    if (intersectBox(shadowRayOrigin, shadowRayDir, smallBoxModel, tHit) && tHit < lightDist)
+    for(int i = 0; i < objectCount; i++)
     {
-        visibility = 0.15;
-    }
-
-    // Large box
-    if (visibility > 0.0 && intersectBox(shadowRayOrigin, shadowRayDir, largeBoxModel, tHit) && tHit < lightDist)
-    {
-        visibility = 0.15;
+        if(intersectBox(shadowRayOrigin, shadowRayDir, objectModels[i], tHit) && tHit < lightDist)
+        {
+            visibility = 0.15;
+            break;
+        }
     }
 
     imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));

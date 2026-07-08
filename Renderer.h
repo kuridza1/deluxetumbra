@@ -2,9 +2,13 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-
+#include <vector>
 #include "Shader.h"
 #include "GBuffer.h"
+
+struct ShadowObject {
+    glm::mat4 model;
+};
 
 class Renderer
 {
@@ -30,8 +34,7 @@ private:
     int screenWidth = 0;
     int screenHeight = 0;
 
-    glm::mat4 smallBoxModel;
-	glm::mat4 largeBoxModel;
+    std::vector<ShadowObject> shadowObjects;
 
     Shader* geometryShader = nullptr;
     Shader* lightingShader = nullptr;
