@@ -8,6 +8,48 @@ layout(r32f, binding = 1) uniform image2D shadowMask;
 
 uniform vec3 lightPos;
 
+uniform vec3 lightCenter;
+uniform vec3 lightRight;
+uniform vec3 lightUp;
+
+const vec2 samples[32] = vec2[](
+    vec2(-0.4375, -0.375),
+    vec2(-0.3125, -0.375),
+    vec2(-0.1875, -0.375),
+    vec2(-0.0625, -0.375),
+    vec2( 0.0625, -0.375),
+    vec2( 0.1875, -0.375),
+    vec2( 0.3125, -0.375),
+    vec2( 0.4375, -0.375),
+
+    vec2(-0.4375, -0.125),
+    vec2(-0.3125, -0.125),
+    vec2(-0.1875, -0.125),
+    vec2(-0.0625, -0.125),
+    vec2( 0.0625, -0.125),
+    vec2( 0.1875, -0.125),
+    vec2( 0.3125, -0.125),
+    vec2( 0.4375, -0.125),
+
+    vec2(-0.4375,  0.125),
+    vec2(-0.3125,  0.125),
+    vec2(-0.1875,  0.125),
+    vec2(-0.0625,  0.125),
+    vec2( 0.0625,  0.125),
+    vec2( 0.1875,  0.125),
+    vec2( 0.3125,  0.125),
+    vec2( 0.4375,  0.125),
+
+    vec2(-0.4375,  0.375),
+    vec2(-0.3125,  0.375),
+    vec2(-0.1875,  0.375),
+    vec2(-0.0625,  0.375),
+    vec2( 0.0625,  0.375),
+    vec2( 0.1875,  0.375),
+    vec2( 0.3125,  0.375),
+    vec2( 0.4375,  0.375)
+);
+
 uniform int objectCount;
 uniform mat4 objectModels[MAX_OBJECTS];
 
@@ -38,24 +80,35 @@ void main() {
 
     vec3 fragPos = texelFetch(gPosition, pixel, 0).xyz;
 
-    vec3 toLight = lightPos - fragPos;
-    float lightDist = length(toLight);
-    vec3 shadowRayDir = toLight / lightDist;
+    float visibility = 0.0;
 
-    // Offset da se izbegne self-intersection
-    vec3 shadowRayOrigin = fragPos + shadowRayDir * 0.02;
-
-    float visibility = 1.0;
-
-    float tHit;
-    for(int i = 0; i < objectCount; i++)
+    for(int s = 0; s < 32; s++)
     {
-        if(intersectBox(shadowRayOrigin, shadowRayDir, objectModels[i], tHit) && tHit < lightDist)
+        vec3 samplePos = lightCenter + samples[s].x * lightRight + samples[s].y * lightUp;
+
+        vec3 toLight = samplePos - fragPos;
+        float lightDist = length(toLight);
+        vec3 rayDir = normalize(toLight);
+
+        vec3 rayOrigin = fragPos + rayDir * 0.02;
+
+        bool blocked = false;
+        float tHit;
+
+        for(int i = 0; i < objectCount; i++)
         {
-            visibility = 0.15;
-            break;
+            if(intersectBox(rayOrigin, rayDir, objectModels[i], tHit) && tHit < lightDist)
+            {
+                blocked = true;
+                break;
+            }
         }
+
+        if(!blocked)
+            visibility += 1.0;
     }
+
+    visibility /= 32.0;
 
     imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));
 }

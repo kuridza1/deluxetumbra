@@ -240,6 +240,11 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
                    glm::vec3(5.0f, 5.0f, 0.02f));
     drawObject(m, glm::vec3(0.8f));
 
+	// Front wall
+    //m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)),
+    //    glm::vec3(5.0f, 5.0f, 0.02f));
+    //drawObject(m, glm::vec3(0.8f));
+
     // Small box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
@@ -309,8 +314,13 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
         glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(shadowObjects[i].model));
     }
 
-    glUniform3f(glGetUniformLocation(shadowShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-    glActiveTexture(GL_TEXTURE0);
+    glm::vec3 lightCenter = lightPos;
+    glm::vec3 lightRight(1.0f, 0.0f, 0.0f);
+    glm::vec3 lightUp(0.0f, 0.0f, 0.6f);
+
+    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightCenter"), 1, glm::value_ptr(lightCenter));
+    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightRight"), 1, glm::value_ptr(lightRight));
+    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightUp"), 1, glm::value_ptr(lightUp));    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
 
     glUniform1i(glGetUniformLocation(shadowShader->ID, "gPosition"), 0);
