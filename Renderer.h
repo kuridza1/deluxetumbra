@@ -6,8 +6,56 @@
 #include "Shader.h"
 #include "GBuffer.h"
 
-struct ShadowObject {
+struct AABB
+{
+    glm::vec3 min;
+    glm::vec3 max;
+};
+
+struct ShadowObject
+{
     glm::mat4 model;
+    AABB bounds;
+    int id;
+
+};
+
+struct SceneObject
+{
+    glm::mat4 model;
+    glm::vec3 color;
+    float emission;
+};
+
+
+void buildScene();
+struct BVHNode
+{
+    AABB bounds;
+
+    int left = -1;
+    int right = -1;
+
+    int object = -1;
+
+    bool leaf = false;
+};
+
+struct GPUBVHNode
+{
+    glm::vec4 min;
+    glm::vec4 max;
+
+    int left;
+    int right;
+    int object;
+
+    int leaf;
+};
+
+struct GPUObject
+{
+    glm::mat4 inverseModel;
 };
 
 class Renderer
@@ -19,7 +67,7 @@ public:
     void geometryPass(const glm::mat4& view, const glm::mat4& projection);
     void shadowPass(const glm::vec3& lightPos);
     void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
-
+    void buildScene();
 private:
     void drawCube();
     void setColor(GLuint shaderID, const glm::vec3& color);
@@ -35,12 +83,24 @@ private:
     int screenHeight = 0;
 
     std::vector<ShadowObject> shadowObjects;
+    std::vector<BVHNode> bvhNodes;
 
     Shader* geometryShader = nullptr;
     Shader* lightingShader = nullptr;
     Shader* shadowShader = nullptr;
 
     GLuint shadowTexture = 0;
+    GLuint bvhSSBO = 0;
+    GLuint objectSSBO = 0;
 
     GBuffer gbuffer;
+
+    std::vector<SceneObject> sceneObjects;
+
+    AABB computeBounds(const glm::mat4& model);
+
+    int buildBVH(int begin, int end);
+
+    void uploadBVH();
+
 };

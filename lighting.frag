@@ -22,7 +22,7 @@ void main()
 
     vec3 emission = texture(gEmission, TexCoords).rgb;
 
-    vec3 result = Albedo * 0.2;
+    vec3 result = Albedo * 0.06;
 
     vec3 lightVector = lightPos - FragPos;
     float distance = length(lightVector);
@@ -30,7 +30,7 @@ void main()
 
     float diff = max(dot(Normal, lightDir), 0.0);
 
-    float attenuation = 1.0 / ( distance * distance);
+    float attenuation = 1.0 / (1.0 + 0.4 * distance + 0.25 * distance * distance);
 
     vec3 diffuse = diff * Albedo * lightColor;
 

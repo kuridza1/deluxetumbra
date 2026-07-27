@@ -3,7 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
-
+#include <limits>
+#include <algorithm>
 
 static float cubeVertices[] =
 {
@@ -105,6 +106,8 @@ bool Renderer::init(int width, int height)
     geometryShader = new Shader("geometry.vert", "geometry.frag");
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
     shadowShader = new Shader("shadow.comp");
+
+    buildScene();
     // G-buffer
     if (!gbuffer.init(width, height))
     {
@@ -113,30 +116,13 @@ bool Renderer::init(int width, int height)
     }
     glGenTextures(1, &shadowTexture);
 
-    glBindTexture(
-        GL_TEXTURE_2D,
-        shadowTexture);
+    glBindTexture( GL_TEXTURE_2D, shadowTexture);
 
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_R32F,
-        width,
-        height,
-        0,
-        GL_RED,
-        GL_FLOAT,
-        nullptr);
+    glTexImage2D( GL_TEXTURE_2D,0,GL_R32F,width,height, 0,GL_RED, GL_FLOAT, nullptr);
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MAG_FILTER,
-        GL_NEAREST);
+    glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     return true;
@@ -151,9 +137,7 @@ void Renderer::destroy()
 
     if (shadowTexture)
     {
-        glDeleteTextures(
-            1,
-            &shadowTexture);
+        glDeleteTextures(1, &shadowTexture);
     }
     if (VAO)     { glDeleteVertexArrays(1, &VAO);     VAO     = 0; }
     if (VBO)     { glDeleteBuffers(1, &VBO);           VBO     = 0; }
@@ -161,6 +145,76 @@ void Renderer::destroy()
     if (quadVBO) { glDeleteBuffers(1, &quadVBO);       quadVBO = 0; }
 }
 
+void Renderer::buildScene()
+{
+    sceneObjects.clear();
+    shadowObjects.clear();
+    bvhNodes.clear();
+
+    auto addObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f)
+        {
+            int id = sceneObjects.size();
+
+            sceneObjects.push_back({ model, color, emission });
+
+            ShadowObject shadow;
+            shadow.model = model;
+            shadow.bounds = computeBounds(model);
+            shadow.id = id;
+
+            shadowObjects.push_back(shadow);
+        };
+
+    glm::mat4 m;
+
+    // Floor
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
+    addObject(m, glm::vec3(0.8f));
+
+    // Ceiling
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
+    addObject(m, glm::vec3(0.8f));
+
+    // Light
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)), glm::vec3(1.2f, 0.02f, 1.2f));
+    addObject(m, glm::vec3(1.0f), 0.25f);
+
+    // Left wall
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
+    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f));
+
+    // Right wall
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
+    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f));
+
+    // Back wall
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
+    addObject(m, glm::vec3(0.8f));
+
+    // Small box
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
+    m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::scale(m, glm::vec3(1.5f));
+    addObject(m, glm::vec3(0.85f));
+
+    // Large box
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
+    m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
+    addObject(m, glm::vec3(0.85f));
+
+    // Smallest box
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
+    m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
+    addObject(m, glm::vec3(0.85f));
+
+    buildBVH(0, shadowObjects.size());
+    uploadBVH();
+}
 
 void Renderer::setColor(GLuint shaderID, const glm::vec3& color)
 {
@@ -181,93 +235,24 @@ void Renderer::drawCube()
 
 void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 {
-    shadowObjects.clear();
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer.FBO);
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     geometryShader->use();
 
-    glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "view"),
-                       1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "projection"),
-                       1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(VAO);
 
-    auto drawObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f)
-        {
-            shadowObjects.push_back({ model });
-
-            setEmission(emission);
-
-            glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-            setColor(geometryShader->ID, color);
-
-            drawCube();
-        };
-
-    glm::mat4 m;
-
-    // Floor
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)),
-                   glm::vec3(5.0f, 0.02f, 5.0f));
-    drawObject(m, glm::vec3(0.8f));
-
-    // Ceiling
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)),
-                   glm::vec3(5.0f, 0.02f, 5.0f));
-    drawObject(m, glm::vec3(0.8f));
-
-    // Light panel (emissive)
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)),
-                   glm::vec3(1.2f, 0.02f, 1.2f));
-    drawObject(m, glm::vec3(1.0f), 0.25f);
-
-    // Left wall (red)
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)),
-                   glm::vec3(0.02f, 5.0f, 5.0f));
-    drawObject(m, glm::vec3(0.75f, 0.1f, 0.1f));
-
-    // Right wall (green)
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)),
-                   glm::vec3(0.02f, 5.0f, 5.0f));
-    drawObject(m, glm::vec3(0.1f, 0.75f, 0.1f));
-
-    // Back wall
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)),
-                   glm::vec3(5.0f, 5.0f, 0.02f));
-    drawObject(m, glm::vec3(0.8f));
-
-	// Front wall
-    //m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)),
-    //    glm::vec3(5.0f, 5.0f, 0.02f));
-    //drawObject(m, glm::vec3(0.8f));
-
-    // Small box
-    m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
-    m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.5f, 1.5f, 1.5f));
-
-    drawObject(m, glm::vec3(0.85f));
-
-    // Large box
-    m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
-    m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
-
-    drawObject(m, glm::vec3(0.85f));
-
-    // Smallest box
-    m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
-    m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
-
-    drawObject(m, glm::vec3(0.85f));
+    for (const SceneObject& obj : sceneObjects)
+    {
+        setEmission(obj.emission);
+        glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(obj.model));
+        setColor(geometryShader->ID, obj.color);
+        drawCube();
+    }
 
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -306,13 +291,8 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
 {
     shadowShader->use();
 
-    int count = shadowObjects.size();
-    glUniform1i(glGetUniformLocation(shadowShader->ID, "objectCount"), count);
-    for (int i = 0; i < count; i++)
-    {
-        std::string name = "objectModels[" + std::to_string(i) + "]";
-        glUniformMatrix4fv(glGetUniformLocation(shadowShader->ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(shadowObjects[i].model));
-    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvhSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, objectSSBO);
 
     glm::vec3 lightCenter = lightPos;
     glm::vec3 lightRight(1.0f, 0.0f, 0.0f);
@@ -320,11 +300,172 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
 
     glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightCenter"), 1, glm::value_ptr(lightCenter));
     glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightRight"), 1, glm::value_ptr(lightRight));
-    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightUp"), 1, glm::value_ptr(lightUp));    glActiveTexture(GL_TEXTURE0);
+    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightUp"), 1, glm::value_ptr(lightUp));
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
 
     glUniform1i(glGetUniformLocation(shadowShader->ID, "gPosition"), 0);
-    glBindImageTexture(1, shadowTexture,0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+    glBindImageTexture(1, shadowTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+}
+
+AABB Renderer::computeBounds(const glm::mat4& model)
+{
+    glm::vec3 corners[8] =
+    {
+        {-0.5f, -0.5f, -0.5f},
+        { 0.5f, -0.5f, -0.5f},
+        {-0.5f,  0.5f, -0.5f},
+        { 0.5f,  0.5f, -0.5f},
+        {-0.5f, -0.5f,  0.5f},
+        { 0.5f, -0.5f,  0.5f},
+        {-0.5f,  0.5f,  0.5f},
+        { 0.5f,  0.5f,  0.5f}
+    };
+
+    glm::vec3 bmin(std::numeric_limits<float>::max());
+    glm::vec3 bmax(std::numeric_limits<float>::lowest());
+
+    for (int i = 0; i < 8; i++)
+    {
+        glm::vec3 p = glm::vec3(model * glm::vec4(corners[i], 1.0f));
+
+        bmin = glm::min(bmin, p);
+        bmax = glm::max(bmax, p);
+    }
+
+    return { bmin, bmax };
+}
+
+AABB mergeAABB(const AABB& a, const AABB& b)
+{
+    return {
+        glm::min(a.min, b.min),
+        glm::max(a.max, b.max)
+    };
+}
+
+int Renderer::buildBVH(int begin, int end)
+{
+    if (begin >= end || begin < 0 || end > shadowObjects.size())
+    {
+        std::cerr << "Invalid BVH range: " << begin << " " << end << " size=" << shadowObjects.size() << std::endl;
+        return -1;
+    }
+
+    BVHNode node;
+
+    AABB bounds = shadowObjects[begin].bounds;
+
+    for (int i = begin + 1; i < end; i++)
+    {
+        bounds = mergeAABB(bounds, shadowObjects[i].bounds);
+    }
+
+    node.bounds = bounds;
+
+    int nodeIndex = bvhNodes.size();
+    bvhNodes.push_back(node);
+
+
+    int count = end - begin;
+
+
+    // Leaf node
+    if (count == 1)
+    {
+        bvhNodes[nodeIndex].leaf = true;
+        bvhNodes[nodeIndex].object = begin;
+        return nodeIndex;
+    }
+
+
+    glm::vec3 size = bounds.max - bounds.min;
+
+    int axis = 0;
+
+    if (size.y > size.x && size.y > size.z)
+        axis = 1;
+    else if (size.z > size.x)
+        axis = 2;
+
+
+    std::sort(
+        shadowObjects.begin() + begin,
+        shadowObjects.begin() + end,
+        [axis](const ShadowObject& a, const ShadowObject& b)
+        {
+            float ca = a.bounds.min[axis] + a.bounds.max[axis];
+            float cb = b.bounds.min[axis] + b.bounds.max[axis];
+
+            return ca < cb;
+        }
+    );
+
+
+    int middle = (begin + end) / 2;
+
+
+    int left = buildBVH(begin, middle);
+    int right = buildBVH(middle, end);
+
+
+    bvhNodes[nodeIndex].left = left;
+    bvhNodes[nodeIndex].right = right;
+
+
+    return nodeIndex;
+}
+
+void Renderer::uploadBVH()
+{
+    std::vector<GPUBVHNode> gpuNodes;
+
+    gpuNodes.reserve(bvhNodes.size());
+
+    for (const BVHNode& node : bvhNodes)
+    {
+        GPUBVHNode gpu;
+
+        gpu.min = glm::vec4(node.bounds.min, 0.0f);
+        gpu.max = glm::vec4(node.bounds.max, 0.0f);
+
+        gpu.left = node.left;
+        gpu.right = node.right;
+        gpu.object = node.object;
+        gpu.leaf = node.leaf ? 1 : 0;
+
+        gpuNodes.push_back(gpu);
+    }
+
+    if (bvhSSBO == 0)
+        glGenBuffers(1, &bvhSSBO);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, bvhSSBO);
+    glBufferData( GL_SHADER_STORAGE_BUFFER, gpuNodes.size() * sizeof(GPUBVHNode), gpuNodes.data(),GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,bvhSSBO );
+
+    std::vector<GPUObject> gpuObjects;
+    gpuObjects.reserve(shadowObjects.size());
+
+    for (const ShadowObject& obj : shadowObjects)
+    {
+        GPUObject gpu;
+        gpu.inverseModel = glm::inverse(obj.model);
+        gpuObjects.push_back(gpu);
+    }
+
+    if (objectSSBO == 0)
+        glGenBuffers(1, &objectSSBO);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, objectSSBO);
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpuObjects.size() * sizeof(GPUObject), gpuObjects.data(), GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,3,objectSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
