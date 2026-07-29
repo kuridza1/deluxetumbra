@@ -147,6 +147,7 @@
   <ItemGroup>
     <None Include="basic.frag" />
     <None Include="basic.vert" />
+    <None Include="denoise.comp" />
     <None Include="geometry.frag" />
     <None Include="geometry.vert" />
     <None Include="lighting.frag" />

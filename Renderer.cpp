@@ -107,7 +107,7 @@ bool Renderer::init(int width, int height)
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
     shadowShader = new Shader("shadow.comp");
     reflectionShader = new Shader("reflection.comp");
-
+    denoiseShader = new Shader("denoise.comp");
     buildScene();
     // G-buffer
     if (!gbuffer.init(width, height))
@@ -128,6 +128,12 @@ bool Renderer::init(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenTextures(1, &denoisedReflectionTexture);
+    glBindTexture(GL_TEXTURE_2D, denoisedReflectionTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     return true;
 }
 
@@ -200,7 +206,7 @@ void Renderer::buildScene()
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
 	//Front wall
-   /* m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
+    /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
 
     // Small box
@@ -303,7 +309,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, gbuffer.gAlbedo);
     glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, gbuffer.gEmission);
     glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
-    glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, denoisedReflectionTexture);
     glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
 
     glBindVertexArray(quadVAO);
@@ -362,6 +368,28 @@ void Renderer::reflectionPass(const glm::vec3& viewPos)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
+void Renderer::denoisePass()
+{
+    denoiseShader->use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    glUniform1i(glGetUniformLocation(denoiseShader->ID, "reflectionTexture"), 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
+    glUniform1i(glGetUniformLocation(denoiseShader->ID, "gPosition"), 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
+    glUniform1i(glGetUniformLocation(denoiseShader->ID, "gNormal"), 2);
+
+    glBindImageTexture(0, denoisedReflectionTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+    glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
 AABB Renderer::computeBounds(const glm::mat4& model)
 {
     glm::vec3 corners[8] =

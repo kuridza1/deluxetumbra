@@ -1,0 +1,79 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(binding = 0) uniform sampler2D reflectionTexture;
+layout(binding = 1) uniform sampler2D gPosition;
+layout(binding = 2) uniform sampler2D gNormal;
+
+layout(rgba16f, binding = 0) uniform image2D outputTexture;
+
+
+const vec2 offsets[9] = vec2[](
+    vec2(-1,-1),
+    vec2(0,-1),
+    vec2(1,-1),
+    vec2(-1,0),
+    vec2(0,0),
+    vec2(1,0),
+    vec2(-1,1),
+    vec2(0,1),
+    vec2(1,1)
+);
+
+
+void main()
+{
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+
+    ivec2 size = imageSize(outputTexture);
+
+    if(pixel.x >= size.x || pixel.y >= size.y)
+        return;
+
+
+    vec3 centerColor = texelFetch(reflectionTexture, pixel, 0).rgb;
+    vec3 centerNormal = texelFetch(gNormal, pixel, 0).rgb;
+    vec3 centerPos = texelFetch(gPosition, pixel, 0).rgb;
+
+
+    vec3 result = vec3(0.0);
+    float weightSum = 0.0;
+
+
+    for(int i=0;i<9;i++)
+    {
+        ivec2 samplePixel = pixel + ivec2(offsets[i]);
+
+
+        if(samplePixel.x < 0 || samplePixel.y < 0 ||
+           samplePixel.x >= size.x ||
+           samplePixel.y >= size.y)
+            continue;
+
+
+        vec3 sampleColor = texelFetch(reflectionTexture, samplePixel,0).rgb;
+        vec3 sampleNormal = texelFetch(gNormal,samplePixel,0).rgb;
+        vec3 samplePos = texelFetch(gPosition,samplePixel,0).rgb;
+
+
+        float normalWeight = pow(max(dot(centerNormal,sampleNormal),0.0),32.0);
+
+        float depthWeight = exp(-length(centerPos-samplePos)*10.0);
+
+        float spatialWeight = 1.0 / (1.0 + length(offsets[i]));
+
+
+        float weight = normalWeight * depthWeight * spatialWeight;
+
+
+        result += sampleColor * weight;
+        weightSum += weight;
+    }
+
+
+    result /= max(weightSum,0.0001);
+
+
+    imageStore(outputTexture,pixel,vec4(result,1.0));
+}

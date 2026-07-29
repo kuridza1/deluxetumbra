@@ -68,6 +68,7 @@ public:
     void shadowPass(const glm::vec3& lightPos);
     void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
     void reflectionPass(const glm::vec3& cameraPos);
+    void denoisePass();
     void buildScene();
 private:
     void drawCube();
@@ -98,6 +99,8 @@ private:
 
     GLuint reflectionTexture = 0;
     Shader* reflectionShader = nullptr;
+    Shader* denoiseShader = nullptr;
+    GLuint denoisedReflectionTexture = 0;
 
     std::vector<SceneObject> sceneObjects;
 
