@@ -25,55 +25,51 @@ const vec2 offsets[9] = vec2[](
 void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-
     ivec2 size = imageSize(outputTexture);
-
     if(pixel.x >= size.x || pixel.y >= size.y)
         return;
 
+    vec4 centerSample = texelFetch(reflectionTexture, pixel, 0);
+    vec3 centerColor = centerSample.rgb;
+    float centerAlpha = centerSample.a;
 
-    vec3 centerColor = texelFetch(reflectionTexture, pixel, 0).rgb;
     vec3 centerNormal = texelFetch(gNormal, pixel, 0).rgb;
     vec3 centerPos = texelFetch(gPosition, pixel, 0).rgb;
 
-
     vec3 result = vec3(0.0);
     float weightSum = 0.0;
+    float alphaSum = 0.0;
 
-
-    for(int i=0;i<9;i++)
+    for(int i = 0; i < 9; i++)
     {
         ivec2 samplePixel = pixel + ivec2(offsets[i]);
-
-
         if(samplePixel.x < 0 || samplePixel.y < 0 ||
-           samplePixel.x >= size.x ||
-           samplePixel.y >= size.y)
+           samplePixel.x >= size.x || samplePixel.y >= size.y)
             continue;
 
+        vec4 sampleTexel = texelFetch(reflectionTexture, samplePixel, 0);
+        vec3 sampleColor = sampleTexel.rgb;
+        float sampleAlpha = sampleTexel.a;
 
-        vec3 sampleColor = texelFetch(reflectionTexture, samplePixel,0).rgb;
-        vec3 sampleNormal = texelFetch(gNormal,samplePixel,0).rgb;
-        vec3 samplePos = texelFetch(gPosition,samplePixel,0).rgb;
+        vec3 sampleNormal = texelFetch(gNormal, samplePixel, 0).rgb;
+        vec3 samplePos = texelFetch(gPosition, samplePixel, 0).rgb;
 
-
-        float normalWeight = pow(max(dot(centerNormal,sampleNormal),0.0),32.0);
-
-        float depthWeight = exp(-length(centerPos-samplePos)*10.0);
-
+        float normalWeight = pow(max(dot(centerNormal, sampleNormal), 0.0), 32.0);
+        float depthWeight = exp(-length(centerPos - samplePos) * 10.0);
         float spatialWeight = 1.0 / (1.0 + length(offsets[i]));
 
+        float colorDist = length(sampleColor - centerColor);
+        float rangeWeight = exp(-colorDist * colorDist * 15.0); // 8.0 = osetljivost, podesi
 
-        float weight = normalWeight * depthWeight * spatialWeight;
+        float weight = normalWeight * depthWeight * spatialWeight * rangeWeight;
 
-
-        result += sampleColor * weight;
+        result += sampleColor * weight * sampleAlpha;
+        alphaSum += sampleAlpha * weight;
         weightSum += weight;
     }
 
+    result /= max(alphaSum, 0.0001);
+    float outAlpha = alphaSum / max(weightSum, 0.0001);
 
-    result /= max(weightSum,0.0001);
-
-
-    imageStore(outputTexture,pixel,vec4(result,1.0));
+    imageStore(outputTexture, pixel, vec4(result, outAlpha));
 }
