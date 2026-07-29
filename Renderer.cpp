@@ -275,6 +275,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gNormal"),   1);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gAlbedo"),   2);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gEmission"), 3);
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "reflectionTexture"), 5);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
@@ -285,6 +286,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, gbuffer.gAlbedo);
     glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, gbuffer.gEmission);
     glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
+    glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, reflectionTexture);
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
