@@ -148,17 +148,22 @@ void Renderer::destroy()
     if (quadVBO) { glDeleteBuffers(1, &quadVBO);       quadVBO = 0; }
 }
 
+void Renderer::setReflectivity(float r)
+{
+    glUniform1f(glGetUniformLocation(geometryShader->ID, "reflectivity"), r);
+}
+
 void Renderer::buildScene()
 {
     sceneObjects.clear();
     shadowObjects.clear();
     bvhNodes.clear();
 
-    auto addObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f)
+    auto addObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f, float reflectivity = 0.0f)
         {
             int id = sceneObjects.size();
 
-            sceneObjects.push_back({ model, color, emission });
+            sceneObjects.push_back({ model, color, emission, reflectivity});
 
             ShadowObject shadow;
             shadow.model = model;
@@ -172,48 +177,48 @@ void Renderer::buildScene()
 
     // Floor
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(0.8f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.05f);
 
     // Ceiling
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(0.8f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
     // Light
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)), glm::vec3(1.2f, 0.02f, 1.2f));
-    addObject(m, glm::vec3(1.0f), 0.25f);
+    addObject(m, glm::vec3(1.0f), 0.25f, 0.0f);
 
     // Left wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f));
+    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f), 0.0f, 0.05f);
 
     // Right wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f));
+    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f), 0.0f, 0.05f);
 
     // Back wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
-    addObject(m, glm::vec3(0.8f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
     // Small box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
     m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.5f));
-    addObject(m, glm::vec3(0.85f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
 
     // Large box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
     m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
-    addObject(m, glm::vec3(0.85f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
 
     // Smallest box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
     m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
-    addObject(m, glm::vec3(0.85f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();
@@ -252,6 +257,7 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
     for (const SceneObject& obj : sceneObjects)
     {
         setEmission(obj.emission);
+        setReflectivity(obj.reflectivity);
         glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(obj.model));
         setColor(geometryShader->ID, obj.color);
         drawCube();
@@ -275,8 +281,9 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gNormal"),   1);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gAlbedo"),   2);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gEmission"), 3);
-    glUniform1i(glGetUniformLocation(lightingShader->ID, "reflectionTexture"), 5);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "reflectionTexture"), 5);
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "gReflectivity"), 6);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.95f, 0.8f);
@@ -287,6 +294,8 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, gbuffer.gEmission);
     glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
+
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -325,7 +334,7 @@ void Renderer::reflectionPass(const glm::vec3& viewPos)
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvhSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, objectSSBO);
-
+    
     glUniform3fv(glGetUniformLocation(reflectionShader->ID, "viewPos"), 1, glm::value_ptr(viewPos));
 
     glActiveTexture(GL_TEXTURE0);
@@ -334,9 +343,10 @@ void Renderer::reflectionPass(const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glUniform1i(glGetUniformLocation(reflectionShader->ID, "gNormal"), 1);
-
-    glBindImageTexture(2, reflectionTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
+    glUniform1i(glGetUniformLocation(reflectionShader->ID, "gReflectivity"), 4);
+    glBindImageTexture(0, reflectionTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);

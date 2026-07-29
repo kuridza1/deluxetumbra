@@ -1,6 +1,7 @@
 #version 450 core
 
 layout(local_size_x = 16, local_size_y = 16) in;
+
 layout(binding = 0) uniform sampler2D gPosition;
 layout(r32f, binding = 1) uniform image2D shadowMask;
 
@@ -11,96 +12,64 @@ uniform vec3 lightUp;
 struct BVHNode {
     vec4 min;
     vec4 max;
-
     int left;
     int right;
-
     int object;
-
     int leaf;
 };
-
 
 layout(std430, binding = 2) buffer BVHBuffer {
     BVHNode nodes[];
 };
 
-
-layout(std430, binding = 3) buffer ObjectBuffer{
-    mat4 inverseModels[];
+struct GPUObject {
+    mat4 inverseModel;
+    vec4 color;
 };
 
-
+layout(std430, binding = 3) buffer ObjectBuffer {
+    GPUObject objects[];
+};
 
 const vec2 samples[16] = vec2[](
-    vec2(-0.375, -0.375),
-    vec2(-0.125, -0.375),
-    vec2( 0.125, -0.375),
-    vec2( 0.375, -0.375),
-
-    vec2(-0.375, -0.125),
-    vec2(-0.125, -0.125),
-    vec2( 0.125, -0.125),
-    vec2( 0.375, -0.125),
-
-    vec2(-0.375,  0.125),
-    vec2(-0.125,  0.125),
-    vec2( 0.125,  0.125),
-    vec2( 0.375,  0.125),
-
-    vec2(-0.375,  0.375),
-    vec2(-0.125,  0.375),
-    vec2( 0.125,  0.375),
-    vec2( 0.375,  0.375)
+    vec2(-0.375, -0.375), vec2(-0.125, -0.375), vec2(0.125, -0.375), vec2(0.375, -0.375),
+    vec2(-0.375, -0.125), vec2(-0.125, -0.125), vec2(0.125, -0.125), vec2(0.375, -0.125),
+    vec2(-0.375, 0.125), vec2(-0.125, 0.125), vec2(0.125, 0.125), vec2(0.375, 0.125),
+    vec2(-0.375, 0.375), vec2(-0.125, 0.375), vec2(0.125, 0.375), vec2(0.375, 0.375)
 );
 
-
-// Ray-AABB intersection
 bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit)
 {
     vec3 invRd = 1.0 / rd;
-
     vec3 t0 = (bmin - ro) * invRd;
     vec3 t1 = (bmax - ro) * invRd;
-
     vec3 tMin = min(t0, t1);
     vec3 tMax = max(t0, t1);
-
     float tEnter = max(max(tMin.x, tMin.y), tMin.z);
     float tExit = min(min(tMax.x, tMax.y), tMax.z);
-
     tHit = tEnter;
-
     return tExit > max(tEnter, 0.0);
 }
 
-
-
-bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit) {
+bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit)
+{
     vec3 localOrigin = (invModel * vec4(rayOrigin, 1.0)).xyz;
     vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
     return intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), tHit);
 }
 
-
-
-// BVH traversal
 bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObject, out float closestHit)
 {
     int stack[64];
     int stackPtr = 0;
-
     stack[stackPtr++] = 0;
-
     hitObject = -1;
     closestHit = maxDistance;
 
     while(stackPtr > 0)
     {
         int nodeIndex = stack[--stackPtr];
-
         BVHNode node = nodes[nodeIndex];
-
         float nodeHit;
 
         if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeHit))
@@ -109,11 +78,11 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
         if(nodeHit > closestHit)
             continue;
 
-
         if(node.leaf == 1)
         {
             float objectHit;
-            if(intersectBox(rayOrigin, rayDir, inverseModels[node.object], objectHit))
+
+            if(intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit))
             {
                 if(objectHit > 0.0 && objectHit < closestHit)
                 {
@@ -135,28 +104,34 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
     return hitObject >= 0;
 }
 
-
-
-void main() {
+void main()
+{
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(shadowMask);
+
     if(pixel.x >= size.x || pixel.y >= size.y)
         return;
 
     vec3 fragPos = texelFetch(gPosition, pixel, 0).xyz;
     float visibility = 0.0;
 
-    for(int s = 0; s < 16; s++) {
+    for(int s = 0; s < 16; s++)
+    {
         vec3 samplePos = lightCenter + samples[s].x * lightRight + samples[s].y * lightUp;
         vec3 toLight = samplePos - fragPos;
         float lightDist = length(toLight);
         vec3 rayDir = normalize(toLight);
         vec3 rayOrigin = fragPos + rayDir * 0.02;
-        bool blocked = traverseBVH(rayOrigin, rayDir, lightDist);
+
+        int hitObject;
+        float hitDistance;
+
+        bool blocked = traverseBVH(rayOrigin, rayDir, lightDist, hitObject, hitDistance);
 
         if(!blocked)
             visibility += 1.0;
     }
+
     visibility /= 16.0;
 
     imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));

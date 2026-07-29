@@ -25,10 +25,9 @@ struct SceneObject
     glm::mat4 model;
     glm::vec3 color;
     float emission;
+    float reflectivity;
 };
 
-
-void buildScene();
 struct BVHNode
 {
     AABB bounds;
@@ -74,7 +73,7 @@ private:
     void drawCube();
     void setColor(GLuint shaderID, const glm::vec3& color);
     void setEmission(float e);
-
+    void setReflectivity(float r);
     GLuint VAO = 0;
     GLuint VBO = 0;
 

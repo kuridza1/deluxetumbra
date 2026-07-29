@@ -37,6 +37,14 @@ bool GBuffer::init(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gEmission, 0);
 
+	// Reflectivity
+    glGenTextures(1, &gReflectivity);
+    glBindTexture(GL_TEXTURE_2D, gReflectivity);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gReflectivity, 0);
+
     // Depth
     glGenRenderbuffers(1, &rboDepth);
     glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
@@ -44,14 +52,16 @@ bool GBuffer::init(int width, int height)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
     // Draw
-    GLuint attachments[4] =
+    GLuint attachments[5] =
     {
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
-        GL_COLOR_ATTACHMENT3
+        GL_COLOR_ATTACHMENT3,
+        GL_COLOR_ATTACHMENT4
+
     };
-    glDrawBuffers(4, attachments);
+    glDrawBuffers(5, attachments);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -71,5 +81,7 @@ void GBuffer::destroy()
     if (gAlbedo)   { glDeleteTextures(1, &gAlbedo);         gAlbedo   = 0; }
     if (gNormal)   { glDeleteTextures(1, &gNormal);         gNormal   = 0; }
     if (gPosition) { glDeleteTextures(1, &gPosition);       gPosition = 0; }
+    if (gReflectivity){glDeleteTextures(1, &gReflectivity); gReflectivity = 0; }
+
     if (FBO)       { glDeleteFramebuffers(1, &FBO);         FBO       = 0; }
 }

@@ -12,7 +12,7 @@ public:
     GLuint gAlbedo   = 0;
     GLuint gEmission = 0;
     GLuint rboDepth  = 0;
-
+    GLuint gReflectivity = 0;
     GBuffer() = default;
 
     bool init(int width, int height);

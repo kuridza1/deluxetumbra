@@ -8,6 +8,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
 uniform sampler2D gEmission;
+uniform sampler2D gReflectivity;
 uniform sampler2D reflectionTexture;
 
 uniform vec3 lightPos;
@@ -20,7 +21,6 @@ void main()
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
     vec3 Normal   = normalize(texture(gNormal, TexCoords).rgb);
     vec3 Albedo   = texture(gAlbedo, TexCoords).rgb;
-
     vec3 emission = texture(gEmission, TexCoords).rgb;
 
     vec3 result = Albedo * 0.06;
@@ -49,7 +49,9 @@ void main()
     result = result * mix(0.3, 1.0, shadow);
 
     vec3 reflection = texture(reflectionTexture, TexCoords).rgb;
-    result += reflection * 0.35;
+    float reflectivity = texture(gReflectivity, TexCoords).r;
+
+    result += reflection * reflectivity;
 
     FragColor = vec4(result, 1.0);
 }

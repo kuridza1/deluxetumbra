@@ -5,11 +5,10 @@ layout(local_size_x = 16, local_size_y = 16) in;
 layout(binding = 0) uniform sampler2D gPosition;
 layout(binding = 1) uniform sampler2D gNormal;
 
-layout(rgba16f, binding = 2) uniform image2D reflectionTexture;
-
+layout(binding = 4) uniform sampler2D gReflectivity;
+layout(rgba16f, binding = 0) uniform image2D reflectionTexture;
 
 uniform vec3 viewPos;
-
 
 struct BVHNode
 {
@@ -122,22 +121,24 @@ void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(reflectionTexture);
-
     if(pixel.x >= size.x || pixel.y >= size.y)
         return;
 
     vec3 fragPos = texelFetch(gPosition, pixel, 0).rgb;
     vec3 normal = normalize(texelFetch(gNormal, pixel, 0).rgb);
 
-    vec3 viewDir = normalize(fragPos - viewPos);
-    vec3 reflectionDir = normalize(reflect(viewDir, normal));
+    vec3 viewDir = normalize(viewPos - fragPos);
+    vec3 reflectionDir = normalize(reflect(-viewDir, normal));
     vec3 rayOrigin = fragPos + reflectionDir * 0.02;
     int hitObject;
     float hitDistance;
     vec3 reflectionColor = vec3(0.0);
+    float reflectivity = texelFetch(gReflectivity, pixel, 0).r;
+
     if(traverseBVH(rayOrigin, reflectionDir, 100.0, hitObject, hitDistance))
     {
         reflectionColor = objects[hitObject].color.rgb;
+        reflectionColor *= reflectivity;
     }
     imageStore(reflectionTexture, pixel, vec4(reflectionColor, 1.0));
 }
