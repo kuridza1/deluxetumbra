@@ -8,6 +8,7 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
 uniform sampler2D gEmission;
+uniform sampler2D reflectionTexture;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -46,5 +47,9 @@ void main()
     float shadow = texture(shadowMask, TexCoords).r;
 
     result = result * mix(0.3, 1.0, shadow);
+
+    vec3 reflection = texture(reflectionTexture, TexCoords).rgb;
+    result += reflection * 0.35;
+
     FragColor = vec4(result, 1.0);
 }

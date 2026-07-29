@@ -152,6 +152,7 @@
     <None Include="lighting.frag" />
     <None Include="lighting.vert" />
     <None Include="packages.config" />
+    <None Include="reflection.comp" />
     <None Include="shadow.comp" />
   </ItemGroup>
   <ItemGroup>

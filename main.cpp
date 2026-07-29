@@ -68,6 +68,7 @@ int main()
 
         renderer.geometryPass(view, projection);
         renderer.shadowPass(lightPos);
+		renderer.reflectionPass(camera.Position);
         renderer.lightingPass(lightPos, camera.Position);
 
         glfwSwapBuffers(window);

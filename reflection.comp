@@ -1,14 +1,18 @@
 #version 450 core
 
 layout(local_size_x = 16, local_size_y = 16) in;
+
 layout(binding = 0) uniform sampler2D gPosition;
-layout(r32f, binding = 1) uniform image2D shadowMask;
+layout(binding = 1) uniform sampler2D gNormal;
 
-uniform vec3 lightCenter;
-uniform vec3 lightRight;
-uniform vec3 lightUp;
+layout(rgba16f, binding = 2) uniform image2D reflectionTexture;
 
-struct BVHNode {
+
+uniform vec3 viewPos;
+
+
+struct BVHNode
+{
     vec4 min;
     vec4 max;
 
@@ -21,41 +25,25 @@ struct BVHNode {
 };
 
 
-layout(std430, binding = 2) buffer BVHBuffer {
+layout(std430, binding = 2) buffer BVHBuffer
+{
     BVHNode nodes[];
 };
 
 
-layout(std430, binding = 3) buffer ObjectBuffer{
-    mat4 inverseModels[];
+struct GPUObject
+{
+    mat4 inverseModel;
+    vec4 color;
 };
 
 
-
-const vec2 samples[16] = vec2[](
-    vec2(-0.375, -0.375),
-    vec2(-0.125, -0.375),
-    vec2( 0.125, -0.375),
-    vec2( 0.375, -0.375),
-
-    vec2(-0.375, -0.125),
-    vec2(-0.125, -0.125),
-    vec2( 0.125, -0.125),
-    vec2( 0.375, -0.125),
-
-    vec2(-0.375,  0.125),
-    vec2(-0.125,  0.125),
-    vec2( 0.125,  0.125),
-    vec2( 0.375,  0.125),
-
-    vec2(-0.375,  0.375),
-    vec2(-0.125,  0.375),
-    vec2( 0.125,  0.375),
-    vec2( 0.375,  0.375)
-);
+layout(std430, binding = 3) buffer ObjectBuffer
+{
+    GPUObject objects[];
+};
 
 
-// Ray-AABB intersection
 bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit)
 {
     vec3 invRd = 1.0 / rd;
@@ -67,40 +55,34 @@ bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit)
     vec3 tMax = max(t0, t1);
 
     float tEnter = max(max(tMin.x, tMin.y), tMin.z);
-    float tExit = min(min(tMax.x, tMax.y), tMax.z);
+    float tExit  = min(min(tMax.x, tMax.y), tMax.z);
 
     tHit = tEnter;
-
     return tExit > max(tEnter, 0.0);
 }
 
 
-
-bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit) {
+bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit)
+{
     vec3 localOrigin = (invModel * vec4(rayOrigin, 1.0)).xyz;
     vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
+
     return intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), tHit);
 }
 
 
-
-// BVH traversal
 bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObject, out float closestHit)
 {
     int stack[64];
     int stackPtr = 0;
-
     stack[stackPtr++] = 0;
-
     hitObject = -1;
     closestHit = maxDistance;
 
     while(stackPtr > 0)
     {
         int nodeIndex = stack[--stackPtr];
-
         BVHNode node = nodes[nodeIndex];
-
         float nodeHit;
 
         if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeHit))
@@ -109,11 +91,10 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
         if(nodeHit > closestHit)
             continue;
 
-
         if(node.leaf == 1)
         {
             float objectHit;
-            if(intersectBox(rayOrigin, rayDir, inverseModels[node.object], objectHit))
+            if(intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit))
             {
                 if(objectHit > 0.0 && objectHit < closestHit)
                 {
@@ -137,27 +118,26 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
 
 
 
-void main() {
+void main()
+{
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 size = imageSize(shadowMask);
+    ivec2 size = imageSize(reflectionTexture);
+
     if(pixel.x >= size.x || pixel.y >= size.y)
         return;
 
-    vec3 fragPos = texelFetch(gPosition, pixel, 0).xyz;
-    float visibility = 0.0;
+    vec3 fragPos = texelFetch(gPosition, pixel, 0).rgb;
+    vec3 normal = normalize(texelFetch(gNormal, pixel, 0).rgb);
 
-    for(int s = 0; s < 16; s++) {
-        vec3 samplePos = lightCenter + samples[s].x * lightRight + samples[s].y * lightUp;
-        vec3 toLight = samplePos - fragPos;
-        float lightDist = length(toLight);
-        vec3 rayDir = normalize(toLight);
-        vec3 rayOrigin = fragPos + rayDir * 0.02;
-        bool blocked = traverseBVH(rayOrigin, rayDir, lightDist);
-
-        if(!blocked)
-            visibility += 1.0;
+    vec3 viewDir = normalize(fragPos - viewPos);
+    vec3 reflectionDir = normalize(reflect(viewDir, normal));
+    vec3 rayOrigin = fragPos + reflectionDir * 0.02;
+    int hitObject;
+    float hitDistance;
+    vec3 reflectionColor = vec3(0.0);
+    if(traverseBVH(rayOrigin, reflectionDir, 100.0, hitObject, hitDistance))
+    {
+        reflectionColor = objects[hitObject].color.rgb;
     }
-    visibility /= 16.0;
-
-    imageStore(shadowMask, pixel, vec4(visibility, 0.0, 0.0, 1.0));
+    imageStore(reflectionTexture, pixel, vec4(reflectionColor, 1.0));
 }

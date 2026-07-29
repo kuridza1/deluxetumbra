@@ -63,6 +63,9 @@
     <None Include="shadow.comp">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="reflection.comp">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">

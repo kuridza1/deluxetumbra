@@ -56,6 +56,7 @@ struct GPUBVHNode
 struct GPUObject
 {
     glm::mat4 inverseModel;
+    glm::vec4 color;
 };
 
 class Renderer
@@ -67,6 +68,7 @@ public:
     void geometryPass(const glm::mat4& view, const glm::mat4& projection);
     void shadowPass(const glm::vec3& lightPos);
     void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
+    void reflectionPass(const glm::vec3& cameraPos);
     void buildScene();
 private:
     void drawCube();
@@ -94,6 +96,9 @@ private:
     GLuint objectSSBO = 0;
 
     GBuffer gbuffer;
+
+    GLuint reflectionTexture = 0;
+    Shader* reflectionShader = nullptr;
 
     std::vector<SceneObject> sceneObjects;
 

@@ -106,6 +106,7 @@ bool Renderer::init(int width, int height)
     geometryShader = new Shader("geometry.vert", "geometry.frag");
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
     shadowShader = new Shader("shadow.comp");
+    reflectionShader = new Shader("reflection.comp");
 
     buildScene();
     // G-buffer
@@ -115,15 +116,17 @@ bool Renderer::init(int width, int height)
         return false;
     }
     glGenTextures(1, &shadowTexture);
-
     glBindTexture( GL_TEXTURE_2D, shadowTexture);
-
     glTexImage2D( GL_TEXTURE_2D,0,GL_R32F,width,height, 0,GL_RED, GL_FLOAT, nullptr);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-
     glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
+    glGenTextures(1, &reflectionTexture);
+    glBindTexture(GL_TEXTURE_2D, reflectionTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
     return true;
 }
@@ -314,6 +317,29 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
+void Renderer::reflectionPass(const glm::vec3& viewPos)
+{
+    reflectionShader->use();
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvhSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, objectSSBO);
+
+    glUniform3fv(glGetUniformLocation(reflectionShader->ID, "viewPos"), 1, glm::value_ptr(viewPos));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
+    glUniform1i(glGetUniformLocation(reflectionShader->ID, "gPosition"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
+    glUniform1i(glGetUniformLocation(reflectionShader->ID, "gNormal"), 1);
+
+    glBindImageTexture(2, reflectionTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+    glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+}
+
 AABB Renderer::computeBounds(const glm::mat4& model)
 {
     glm::vec3 corners[8] =
@@ -457,6 +483,7 @@ void Renderer::uploadBVH()
     {
         GPUObject gpu;
         gpu.inverseModel = glm::inverse(obj.model);
+        gpu.color = glm::vec4(sceneObjects[obj.id].color, 1.0f);
         gpuObjects.push_back(gpu);
     }
 
