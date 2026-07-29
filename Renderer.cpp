@@ -185,7 +185,7 @@ void Renderer::buildScene()
 
     // Light
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)), glm::vec3(1.2f, 0.02f, 1.2f));
-    addObject(m, glm::vec3(1.0f), 0.25f, 0.0f);
+    addObject(m, glm::vec3(1.0f), 0.2f, 0.0f);
 
     // Left wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
@@ -199,26 +199,30 @@ void Renderer::buildScene()
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
+	//Front wall
+   /* m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
+
     // Small box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
     m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.5f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
     // Large box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
     m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
     // Smallest box
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
     m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.5f);
+    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();
@@ -287,6 +291,12 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.95f, 0.8f);
+
+    glUniform3fv(glGetUniformLocation(lightingShader->ID, "redWallColor"), 1, glm::value_ptr(redWallColor));
+    glUniform3fv(glGetUniformLocation(lightingShader->ID, "greenWallColor"), 1, glm::value_ptr(greenWallColor));
+    glUniform1f(glGetUniformLocation(lightingShader->ID, "redWallX"), redWallX);
+    glUniform1f(glGetUniformLocation(lightingShader->ID, "greenWallX"), greenWallX);
+    glUniform1f(glGetUniformLocation(lightingShader->ID, "bleedStrength"), bleedStrength);
 
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);

@@ -103,6 +103,12 @@ private:
 
     AABB computeBounds(const glm::mat4& model);
 
+    glm::vec3 redWallColor = glm::vec3(0.75f, 0.1f, 0.1f);
+    glm::vec3 greenWallColor = glm::vec3(0.1f, 0.75f, 0.1f);
+    float redWallX = -2.5f;
+    float greenWallX = 2.5f;
+    float bleedStrength = 0.3f;
+
     int buildBVH(int begin, int end);
 
     void uploadBVH();

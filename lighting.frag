@@ -16,6 +16,31 @@ uniform vec3 viewPos;
 uniform sampler2D shadowMask;
 uniform vec3 lightColor;
 
+uniform vec3 redWallColor;   // (0.75, 0.1, 0.1)
+uniform vec3 greenWallColor; // (0.1, 0.75, 0.1)
+uniform float redWallX;      // -2.5
+uniform float greenWallX;    //  2.5
+uniform float bleedStrength; // npr. 0.5 - podesi eksperimentalno
+
+vec3 computeColorBleed(vec3 fragPos, vec3 normal)
+{
+    vec3 bleed = vec3(0.0);
+
+    // Crveni zid je na x = redWallX, "gleda" u +x smeru
+    float facingRed = max(dot(normal, vec3(-1.0, 0.0, 0.0)), 0.0);
+    float distRed = abs(fragPos.x - redWallX);
+    float falloffRed = 1.0 / (1.0 + 0.35 * distRed * distRed);
+    bleed += redWallColor * facingRed * falloffRed;
+
+    // Zeleni zid je na x = greenWallX, "gleda" u -x smeru
+    float facingGreen = max(dot(normal, vec3(1.0, 0.0, 0.0)), 0.0);
+    float distGreen = abs(fragPos.x - greenWallX);
+    float falloffGreen = 1.0 / (1.0 + 0.35 * distGreen * distGreen);
+    bleed += greenWallColor * facingGreen * falloffGreen;
+
+    return bleed * bleedStrength;
+}
+
 void main()
 {
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
@@ -23,7 +48,7 @@ void main()
     vec3 Albedo   = texture(gAlbedo, TexCoords).rgb;
     vec3 emission = texture(gEmission, TexCoords).rgb;
 
-    vec3 result = Albedo * 0.06;
+    vec3 result = Albedo * 0.1;
 
     vec3 lightVector = lightPos - FragPos;
     float distance = length(lightVector);
@@ -40,18 +65,19 @@ void main()
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = vec3(0.15) * spec;
+    vec3 direct = (diffuse + specular) * attenuation * 3.0;
 
-    result += (diffuse + specular) * attenuation * 3.0;
-
-    result += emission;
     float shadow = texture(shadowMask, TexCoords).r;
+    direct *= mix(0.15, 1.0, shadow);
+    vec3 bleed = computeColorBleed(FragPos, Normal) * Albedo;
 
-    result = result * mix(0.3, 1.0, shadow);
-
+    result += direct + emission + bleed;
     vec3 reflection = texture(reflectionTexture, TexCoords).rgb;
+    vec4 reflSample = texture(reflectionTexture, TexCoords);
     float reflectivity = texture(gReflectivity, TexCoords).r;
+    float reflectAmount = reflectivity * reflSample.a; // alpha=0 kad zrak promaši
 
-    result += reflection * reflectivity;
-
+    result = mix(result, reflSample.rgb, reflectAmount);
+    
     FragColor = vec4(result, 1.0);
 }
