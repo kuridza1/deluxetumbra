@@ -71,6 +71,7 @@ public:
     void denoisePass();
     void buildScene();
 private:
+
     void drawCube();
     void setColor(GLuint shaderID, const glm::vec3& color);
     void setEmission(float e);

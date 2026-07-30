@@ -18,7 +18,10 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 6);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Cornell Box", nullptr, nullptr);
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+    GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Cornell Box", monitor, nullptr);
     if (!window)
     {
         std::cerr << "Window creation failed\n";
@@ -36,7 +39,7 @@ int main()
     }
 
     glEnable(GL_MULTISAMPLE);
-    glViewport(0, 0, WIDTH, HEIGHT);
+    glViewport(0, 0, mode->width, mode->height);
 
     Camera       camera;
     InputHandler input;
@@ -44,8 +47,7 @@ int main()
 
     input.init(window, &camera, WIDTH, HEIGHT);
 
-    if (!renderer.init(WIDTH, HEIGHT))
-    {
+    if (!renderer.init(mode->width, mode->height)) {
         glfwTerminate();
         return -1;
     }
@@ -64,7 +66,7 @@ int main()
         input.processKeyboard(window, deltaTime);
 
         glm::mat4 view       = camera.GetViewMatrix();
-        glm::mat4 projection = camera.GetProjectionMatrix((float)WIDTH / HEIGHT);
+        glm::mat4 projection = camera.GetProjectionMatrix((float)mode->width / mode->height);
 
         renderer.geometryPass(view, projection);
         renderer.shadowPass(lightPos);

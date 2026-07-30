@@ -191,15 +191,15 @@ void Renderer::buildScene()
 
     // Light
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)), glm::vec3(1.2f, 0.02f, 1.2f));
-    addObject(m, glm::vec3(1.0f), 0.2f, 0.0f);
+    addObject(m, glm::vec3(1.0f), 0.1f, 0.0f);
 
     // Left wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f), 0.0f, 0.05f);
+    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f), 0.0f, 0.0f);
 
     // Right wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f), 0.0f, 0.05f);
+    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f), 0.0f, 0.0f);
 
     // Back wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
@@ -228,7 +228,7 @@ void Renderer::buildScene()
     m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
     m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f);
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();
@@ -296,7 +296,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gReflectivity"), 6);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
-    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.95f, 0.8f);
+    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.88f, 0.70f);
 
     glUniform3fv(glGetUniformLocation(lightingShader->ID, "redWallColor"), 1, glm::value_ptr(redWallColor));
     glUniform3fv(glGetUniformLocation(lightingShader->ID, "greenWallColor"), 1, glm::value_ptr(greenWallColor));
