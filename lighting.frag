@@ -10,6 +10,7 @@ uniform sampler2D gAlbedo;
 uniform sampler2D gEmission;
 uniform sampler2D gReflectivity;
 uniform sampler2D reflectionTexture;
+layout(binding=7) uniform sampler2D colorBleed;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -55,6 +56,8 @@ void main()
 
     result = mix(result, reflSample.rgb, reflectAmount);
 
+    vec3 indirect = texture(colorBleed, TexCoords).rgb;
+    result += indirect * 0.5;
 
     FragColor = vec4(result, 1.0);
 }

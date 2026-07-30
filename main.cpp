@@ -72,6 +72,7 @@ int main()
         renderer.shadowPass(lightPos);
 		renderer.reflectionPass(camera.Position);
         renderer.denoisePass();
+        renderer.colorBleedPass();
         renderer.lightingPass(lightPos, camera.Position);
 
         glfwSwapBuffers(window);

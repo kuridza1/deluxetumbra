@@ -305,7 +305,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.88f, 0.70f);
-
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "colorBleed"), 7);
 
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
@@ -314,7 +314,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, denoisedReflectionTexture);
     glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
-
+    glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, colorBleedTexture);
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -393,6 +393,31 @@ void Renderer::denoisePass()
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
+
+void Renderer::colorBleedPass()
+{
+    colorBleedShader->use();
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bvhSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, objectSSBO);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
+    glUniform1i(glGetUniformLocation(colorBleedShader->ID, "gPosition"), 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
+    glUniform1i(glGetUniformLocation(colorBleedShader->ID, "gNormal"), 1);
+
+    glUniform1i(glGetUniformLocation(colorBleedShader->ID, "objectCount"), sceneObjects.size());
+
+    glBindImageTexture(2, colorBleedTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+    glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+}
+
 AABB Renderer::computeBounds(const glm::mat4& model)
 {
     glm::vec3 corners[8] =

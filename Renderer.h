@@ -71,6 +71,7 @@ public:
     void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
     void reflectionPass(const glm::vec3& cameraPos);
     void denoisePass();
+    void colorBleedPass();
     void buildScene();
 private:
 
