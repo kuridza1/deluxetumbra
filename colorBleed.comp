@@ -1,0 +1,122 @@
+#version 450 core
+
+layout(local_size_x=16,local_size_y=16) in;
+
+layout(binding=0) uniform sampler2D gPosition;
+layout(binding=1) uniform sampler2D gNormal;
+layout(rgba16f,binding=2) uniform image2D colorBleed;
+
+struct BVHNode
+{
+    vec4 min;
+    vec4 max;
+    int left;
+    int right;
+    int object;
+    int leaf;
+};
+
+layout(std430,binding=3) buffer BVHBuffer
+{
+    BVHNode nodes[];
+};
+
+struct GPUObject
+{
+    mat4 inverseModel;
+    vec4 color;
+    vec4 position;
+};
+
+layout(std430,binding=4) buffer ObjectBuffer
+{
+    GPUObject objects[];
+};
+
+uniform int objectCount;
+
+bool intersectAABB(vec3 ro,vec3 rd,vec3 bmin,vec3 bmax)
+{
+    vec3 inv=1.0/rd;
+    vec3 t0=(bmin-ro)*inv;
+    vec3 t1=(bmax-ro)*inv;
+    vec3 tmin=min(t0,t1);
+    vec3 tmax=max(t0,t1);
+    float enter=max(max(tmin.x,tmin.y),tmin.z);
+    float exit=min(min(tmax.x,tmax.y),tmax.z);
+    return exit>max(enter,0.0);
+}
+
+bool intersectBox(vec3 ro,vec3 rd,mat4 invModel)
+{
+    vec3 localOrigin=(invModel*vec4(ro,1)).xyz;
+    vec3 localDir=normalize((invModel*vec4(rd,0)).xyz);
+    return intersectAABB(localOrigin,localDir,vec3(-0.5),vec3(0.5));
+}
+
+bool occluded(vec3 ro,vec3 rd,float maxDist)
+{
+    int stack[64];
+    int ptr=0;
+    stack[ptr++]=0;
+
+    while(ptr>0)
+    {
+        int id=stack[--ptr];
+        BVHNode node=nodes[id];
+
+        if(!intersectAABB(ro,rd,node.min.xyz,node.max.xyz))
+            continue;
+
+        if(node.leaf==1)
+        {
+            if(intersectBox(ro,rd,objects[node.object].inverseModel))
+                return true;
+        }
+        else
+        {
+            if(node.left>=0)
+                stack[ptr++]=node.left;
+
+            if(node.right>=0)
+                stack[ptr++]=node.right;
+        }
+    }
+
+    return false;
+}
+
+void main()
+{
+    ivec2 pixel=ivec2(gl_GlobalInvocationID.xy);
+
+    vec3 pos=texelFetch(gPosition,pixel,0).xyz;
+    vec3 normal=normalize(texelFetch(gNormal,pixel,0).xyz);
+
+    vec3 bleed=vec3(0);
+
+    for(int i=0;i<objectCount;i++)
+    {
+        vec3 sourcePos=objects[i].position.xyz;
+        vec3 color=objects[i].color.rgb;
+
+        vec3 dir=sourcePos-pos;
+        float dist=length(dir);
+        dir=normalize(dir);
+
+        float facing=max(dot(normal,dir),0.0);
+
+        if(facing<=0.0)
+            continue;
+
+        vec3 origin=pos+normal*0.02;
+
+        if(!occluded(origin,dir,dist))
+        {
+            float attenuation=1.0/(1.0+dist*dist*0.5);
+            bleed+=color*facing*attenuation;
+        }
+    }
+
+    imageStore(colorBleed,pixel,vec4(bleed*0.2,1.0));
+}

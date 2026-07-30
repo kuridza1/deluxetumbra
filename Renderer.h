@@ -28,6 +28,7 @@ struct SceneObject
     float reflectivity;
 };
 
+
 struct BVHNode
 {
     AABB bounds;
@@ -56,6 +57,7 @@ struct GPUObject
 {
     glm::mat4 inverseModel;
     glm::vec4 color;
+    glm::vec4 position;
 };
 
 class Renderer
@@ -107,12 +109,8 @@ private:
 
     AABB computeBounds(const glm::mat4& model);
 
-    glm::vec3 redWallColor = glm::vec3(0.75f, 0.1f, 0.1f);
-    glm::vec3 greenWallColor = glm::vec3(0.1f, 0.75f, 0.1f);
-    float redWallX = -2.5f;
-    float greenWallX = 2.5f;
-    float bleedStrength = 0.3f;
-
+    GLuint colorBleedTexture = 0;
+	Shader* colorBleedShader = nullptr;
     int buildBVH(int begin, int end);
 
     void uploadBVH();

@@ -107,6 +107,7 @@ bool Renderer::init(int width, int height)
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
     shadowShader = new Shader("shadow.comp");
     reflectionShader = new Shader("reflection.comp");
+    colorBleedShader = new Shader("colorBleed.comp");
     denoiseShader = new Shader("denoise.comp");
     buildScene();
     // G-buffer
@@ -120,6 +121,13 @@ bool Renderer::init(int width, int height)
     glTexImage2D( GL_TEXTURE_2D,0,GL_R32F,width,height, 0,GL_RED, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenTextures(1, &colorBleedTexture);
+    glBindTexture(GL_TEXTURE_2D, colorBleedTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenTextures(1, &reflectionTexture);
@@ -298,11 +306,6 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.88f, 0.70f);
 
-    glUniform3fv(glGetUniformLocation(lightingShader->ID, "redWallColor"), 1, glm::value_ptr(redWallColor));
-    glUniform3fv(glGetUniformLocation(lightingShader->ID, "greenWallColor"), 1, glm::value_ptr(greenWallColor));
-    glUniform1f(glGetUniformLocation(lightingShader->ID, "redWallX"), redWallX);
-    glUniform1f(glGetUniformLocation(lightingShader->ID, "greenWallX"), greenWallX);
-    glUniform1f(glGetUniformLocation(lightingShader->ID, "bleedStrength"), bleedStrength);
 
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
@@ -534,6 +537,7 @@ void Renderer::uploadBVH()
         GPUObject gpu;
         gpu.inverseModel = glm::inverse(obj.model);
         gpu.color = glm::vec4(sceneObjects[obj.id].color, 1.0f);
+        gpu.position = glm::vec4(glm::vec3(obj.model[3]), 1.0);
         gpuObjects.push_back(gpu);
     }
 
@@ -545,4 +549,5 @@ void Renderer::uploadBVH()
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpuObjects.size() * sizeof(GPUObject), gpuObjects.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,3,objectSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 }
