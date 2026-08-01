@@ -27,13 +27,13 @@ vec3 computeColorBleed(vec3 fragPos, vec3 normal)
     vec3 bleed = vec3(0.0);
 
     // Crveni zid je na x = redWallX, "gleda" u +x smeru
-    float facingRed = max(dot(normal, vec3(-1.0, 0.0, 0.0)), 0.0);
+    float facingRed = 0.9 * max(dot(normal, vec3(-1.0,0.0,0.0)),0.0);    
     float distRed = abs(fragPos.x - redWallX);
     float falloffRed = 1.0 / (1.0 + 0.35 * distRed * distRed);
     bleed += redWallColor * facingRed * falloffRed;
 
     // Zeleni zid je na x = greenWallX, "gleda" u -x smeru
-    float facingGreen = max(dot(normal, vec3(1.0, 0.0, 0.0)), 0.0);
+    float facingGreen = 0.9 * max(dot(normal, vec3(1.0,0.0,0.0)),0.0);    
     float distGreen = abs(fragPos.x - greenWallX);
     float falloffGreen = 1.0 / (1.0 + 0.35 * distGreen * distGreen);
     bleed += greenWallColor * facingGreen * falloffGreen;
