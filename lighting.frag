@@ -50,28 +50,33 @@ void main()
     vec3 Albedo   = texture(gAlbedo, TexCoords).rgb;
     vec3 emission = texture(gEmission, TexCoords).rgb;
 
-    vec3 result = Albedo * 0.05;
+    vec3 result = Albedo * 0.08;
 
     vec3 lightVector = lightPos - FragPos;
     float distance = length(lightVector);
     vec3 lightDir = normalize(lightVector);
 
     float ndotl = dot(Normal, lightDir);
-    float diff = smoothstep(-0.25, 0.25, ndotl);
+    float diff = ndotl * 0.5 + 0.5;  
     float attenuation = 1.0 / (1.0 + 0.4 * distance + 0.25 * distance * distance);
 
     vec3 diffuse = diff * Albedo * lightColor ;
 
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, Normal);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float shininess = 64.0;
+    float specBase = pow(max(dot(Normal, halfwayDir), 0.0), shininess);
 
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     float reflectivityMask = texture(gReflectivity, TexCoords).r;
-    vec3 specular = lightColor * spec * 0.5 * reflectivityMask;
+    float specStrength = mix(0.3, 1.0, reflectivityMask);
+    vec3 specular = lightColor * specBase * specStrength;
+
     vec3 direct = (diffuse + specular) * attenuation * 2.0;
 
     float shadow = texture(shadowMask, TexCoords).r;
-    direct *= mix(0.15, 1.0, shadow);
+    float shadowSoft = smoothstep(0.0, 1.0, shadow);
+
+    direct *= mix(0.4, 1.0, shadowSoft);
     vec3 bleed = computeColorBleed(FragPos, Normal) * Albedo;
 
     result += direct + emission + bleed;
