@@ -101,7 +101,7 @@ bool Renderer::init(int width, int height)
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
-
+    createSphere();
     // Shaderi
     geometryShader = new Shader("geometry.vert", "geometry.frag");
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
@@ -165,11 +165,11 @@ void Renderer::buildScene()
     shadowObjects.clear();
     bvhNodes.clear();
 
-    auto addObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f, float reflectivity = 0.0f)
+    auto addObject = [&](const glm::mat4& model, const glm::vec3& color, float emission = 0.0f, float reflectivity = 0.0f, ObjectType type = Cube)
         {
             int id = sceneObjects.size();
 
-            sceneObjects.push_back({ model, color, emission, reflectivity});
+            sceneObjects.push_back({ model, color, emission, reflectivity, type });
 
             ShadowObject shadow;
             shadow.model = model;
@@ -183,7 +183,7 @@ void Renderer::buildScene()
 
     // Floor
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.05f);
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
     // Ceiling
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
@@ -209,26 +209,44 @@ void Renderer::buildScene()
     /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
 
-    // Small box
-    m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
-    m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.5f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
+    //// Small box
+    //m = glm::mat4(1.0f);
+    //m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
+    //m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //m = glm::scale(m, glm::vec3(1.5f));
+    //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
-    // Large box
-    m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
-    m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
+    //// Large box
+    //m = glm::mat4(1.0f);
+    //m = glm::translate(m, glm::vec3(0.6f, 1.0f, -0.8f));
+    //m = glm::rotate(m, glm::radians(-18.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
+    //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
-    // Smallest box
+    //// Smallest box
+    //m = glm::mat4(1.0f);
+    //m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
+    //m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
+    //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
+
+    // Sphere 1
     m = glm::mat4(1.0f);
-    m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
-    m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
+    m = glm::translate(m, glm::vec3(-1.0f, 0.0f, 1.0f));
+    m = glm::scale(m, glm::vec3(1.0f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f, Sphere);
+
+    // Sphere 2
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(0.8f, 0.9f, -0.8f));
+    m = glm::scale(m, glm::vec3(1.3f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f, Sphere);
+
+    // Sphere 3
+    m = glm::mat4(1.0f);
+    m = glm::translate(m, glm::vec3(1.3f, 0.5f, 1.4f));
+    m = glm::scale(m, glm::vec3(0.7f));
+    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f, Sphere);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();
@@ -250,6 +268,83 @@ void Renderer::drawCube()
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
+void Renderer::drawSphere()
+{
+    glBindVertexArray(sphereVAO);
+    glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+}
+
+void Renderer::createSphere(int stacks, int slices)
+{
+    std::vector<float> vertices;
+    std::vector<unsigned int> indices;
+
+    const float PI = 3.14159265359f;
+
+    for (int i = 0;i <= stacks;i++)
+    {
+        float v = (float)i / stacks;
+        float phi = v * PI;
+
+        for (int j = 0;j <= slices;j++)
+        {
+            float u = (float)j / slices;
+            float theta = u * 2.0f * PI;
+
+            float x = sin(phi) * cos(theta);
+            float y = cos(phi);
+            float z = sin(phi) * sin(theta);
+
+            vertices.push_back(x * 0.5f);
+            vertices.push_back(y * 0.5f);
+            vertices.push_back(z * 0.5f);
+
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+        }
+    }
+
+    for (int i = 0;i < stacks;i++)
+    {
+        for (int j = 0;j < slices;j++)
+        {
+            int first = i * (slices + 1) + j;
+            int second = first + slices + 1;
+
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
+
+            indices.push_back(second);
+            indices.push_back(second + 1);
+            indices.push_back(first + 1);
+        }
+    }
+
+    sphereIndexCount = (GLuint)indices.size();
+
+    glGenVertexArrays(1, &sphereVAO);
+    glGenBuffers(1, &sphereVBO);
+    glGenBuffers(1, &sphereEBO);
+
+    glBindVertexArray(sphereVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+}
 
 void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 {
@@ -270,7 +365,10 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
         setReflectivity(obj.reflectivity);
         glUniformMatrix4fv(glGetUniformLocation(geometryShader->ID, "model"), 1, GL_FALSE, glm::value_ptr(obj.model));
         setColor(geometryShader->ID, obj.color);
-        drawCube();
+        if (obj.type == Cube)
+            drawCube();
+        else
+            drawSphere();
     }
 
     glBindVertexArray(0);
@@ -336,7 +434,8 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
 
     glUniform1i(glGetUniformLocation(shadowShader->ID, "gPosition"), 0);
-
+    glActiveTexture(GL_TEXTURE5);                       
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glBindImageTexture(1, shadowTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
@@ -534,6 +633,7 @@ void Renderer::uploadBVH()
         GPUObject gpu;
         gpu.inverseModel = glm::inverse(obj.model);
         gpu.color = glm::vec4(sceneObjects[obj.id].color, 1.0f);
+        gpu.type = sceneObjects[obj.id].type;
         gpuObjects.push_back(gpu);
     }
 

@@ -20,12 +20,19 @@ struct ShadowObject
 
 };
 
+enum ObjectType
+{
+    Cube = 0,
+    Sphere = 1
+};
+
 struct SceneObject
 {
     glm::mat4 model;
     glm::vec3 color;
     float emission;
     float reflectivity;
+    ObjectType type;
 };
 
 struct BVHNode
@@ -54,8 +61,10 @@ struct GPUBVHNode
 
 struct GPUObject
 {
-    glm::mat4 inverseModel;
-    glm::vec4 color;
+    glm::mat4 inverseModel; // 64 B
+    glm::vec4 color;        // 16 B
+    int type;               // 4 B
+    float _pad[3];          // 12 B — poravnanje do 96 B (std430 zahteva multiple of 16)
 };
 
 class Renderer
@@ -73,6 +82,8 @@ public:
 private:
 
     void drawCube();
+    void drawSphere();
+    void createSphere(int stacks = 32, int slices = 32);
     void setColor(GLuint shaderID, const glm::vec3& color);
     void setEmission(float e);
     void setReflectivity(float r);
@@ -81,6 +92,11 @@ private:
 
     GLuint quadVAO = 0;
     GLuint quadVBO = 0;
+
+    GLuint sphereVAO = 0;
+    GLuint sphereVBO = 0;
+    GLuint sphereEBO = 0;
+    GLsizei sphereIndexCount = 0;
 
     int screenWidth = 0;
     int screenHeight = 0;
