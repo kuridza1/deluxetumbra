@@ -64,7 +64,8 @@ struct GPUObject
     glm::mat4 inverseModel; // 64 B
     glm::vec4 color;        // 16 B
     int type;               // 4 B
-    float _pad[3];          // 12 B — poravnanje do 96 B (std430 zahteva multiple of 16)
+    float emission;         // 4 B
+    float _pad[2];          // 8 B — poravnanje do 96 B
 };
 
 class Renderer
@@ -76,7 +77,7 @@ public:
     void geometryPass(const glm::mat4& view, const glm::mat4& projection);
     void shadowPass(const glm::vec3& lightPos);
     void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
-    void reflectionPass(const glm::vec3& cameraPos);
+    void reflectionPass(const glm::vec3& viewPos, const glm::vec3& lightPos);
     void denoisePass();
     void buildScene();
 private:

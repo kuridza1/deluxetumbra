@@ -57,7 +57,7 @@ void main()
     vec3 lightDir = normalize(lightVector);
 
     float ndotl = dot(Normal, lightDir);
-    float diff = ndotl * 0.5 + 0.5;  
+    float diff = smoothstep(-0.6, 0.6, ndotl);
     float attenuation = 1.0 / (1.0 + 0.4 * distance + 0.25 * distance * distance);
 
     vec3 diffuse = diff * Albedo * lightColor ;
@@ -81,11 +81,10 @@ void main()
 
     result += direct + emission + bleed;
     vec3 reflection = texture(reflectionTexture, TexCoords).rgb;
-    vec4 reflSample = texture(reflectionTexture, TexCoords);
     float reflectivity = texture(gReflectivity, TexCoords).r;
-    float reflectAmount = reflectivity * reflSample.a; 
 
-    result = mix(result, reflSample.rgb, reflectAmount);
+
+    result = mix(result, reflection, reflectivity);
 
 
     FragColor = vec4(result, 1.0);

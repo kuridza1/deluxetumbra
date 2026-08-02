@@ -37,19 +37,19 @@ static float cubeVertices[] =
      0.5f,-0.5f, 0.5f,    1.0f, 0.0f, 0.0f,
      0.5f, 0.5f, 0.5f,    1.0f, 0.0f, 0.0f,
 
-    -0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
-     0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
-     0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
-     0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
-    -0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
-    -0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
+    -0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
+     0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
+     0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
+     0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
+    -0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
+    -0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
 
-    -0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f,
-     0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f,
-     0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
-     0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f
+    -0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f,
+     0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f,
+     0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
+     0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
+    -0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
+    -0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f
 };
 
 static float quadVertices[] =
@@ -187,11 +187,11 @@ void Renderer::buildScene()
 
     // Ceiling
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(1.0f), 0.0f, 0.0f);
 
     // Light
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.49f, 0.0f)), glm::vec3(1.2f, 0.02f, 1.2f));
-    addObject(m, glm::vec3(1.0f), 0.1f, 0.0f);
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.40f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
+    addObject(m, glm::vec3(1.0f), 5.0f, 0.0f);
 
     // Left wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
@@ -206,8 +206,8 @@ void Renderer::buildScene()
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
 	//Front wall
-    /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
     //// Small box
     //m = glm::mat4(1.0f);
@@ -234,13 +234,13 @@ void Renderer::buildScene()
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-1.0f, 0.0f, 1.0f));
     m = glm::scale(m, glm::vec3(1.0f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f, Sphere);
+    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f, Sphere);
 
     // Sphere 2
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(0.8f, 0.9f, -0.8f));
     m = glm::scale(m, glm::vec3(1.3f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 0.0f, Sphere);
+    addObject(m, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 1.0f, Sphere);
 
     // Sphere 3
     m = glm::mat4(1.0f);
@@ -443,14 +443,15 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
-void Renderer::reflectionPass(const glm::vec3& viewPos)
+void Renderer::reflectionPass(const glm::vec3& viewPos, const glm::vec3& lightPos)
 {
     reflectionShader->use();
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvhSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, objectSSBO);
-    
+
     glUniform3fv(glGetUniformLocation(reflectionShader->ID, "viewPos"), 1, glm::value_ptr(viewPos));
+    glUniform3fv(glGetUniformLocation(reflectionShader->ID, "lightPos"), 1, glm::value_ptr(lightPos)); 
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
@@ -555,7 +556,7 @@ int Renderer::buildBVH(int begin, int end)
     if (count == 1)
     {
         bvhNodes[nodeIndex].leaf = true;
-        bvhNodes[nodeIndex].object = begin;
+        bvhNodes[nodeIndex].object = shadowObjects[begin].id;
         return nodeIndex;
     }
 
@@ -626,14 +627,16 @@ void Renderer::uploadBVH()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,bvhSSBO );
 
     std::vector<GPUObject> gpuObjects;
-    gpuObjects.reserve(shadowObjects.size());
+    gpuObjects.reserve(sceneObjects.size());
 
-    for (const ShadowObject& obj : shadowObjects)
+    for (const SceneObject& obj : sceneObjects)
     {
         GPUObject gpu;
         gpu.inverseModel = glm::inverse(obj.model);
-        gpu.color = glm::vec4(sceneObjects[obj.id].color, 1.0f);
-        gpu.type = sceneObjects[obj.id].type;
+        gpu.color = glm::vec4(obj.color, 1.0f);
+        gpu.type = obj.type;
+        gpu.emission = obj.emission;
+
         gpuObjects.push_back(gpu);
     }
 
