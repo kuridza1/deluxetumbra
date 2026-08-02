@@ -68,7 +68,14 @@ bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit, ou
     vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
     vec3 localNormal;
 
-    if(!intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), tHit, localNormal)) return false;
+    float localT;
+
+    if(!intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), localT, localNormal)) return false;
+
+    vec3 localHit = localOrigin + localDir * localT;
+    vec3 worldHit = (inverse(invModel) * vec4(localHit, 1.0)).xyz;
+
+    tHit = length(worldHit - rayOrigin);
 
     worldNormal = normalize((transpose(invModel) * vec4(localNormal, 0.0)).xyz);
     if(dot(worldNormal, rayDir) > 0.0)
@@ -93,7 +100,9 @@ bool intersectSphere(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit,
     float t0 = (-b - sqrtD) / (2.0 * a);
     float t1 = (-b + sqrtD) / (2.0 * a);
 
-    tHit = t0 > 0.0 ? t0 : t1;
+    tHit = min(t0, t1);
+    if(tHit < 0.0) tHit = max(t0, t1);
+    if(tHit < 0.0) return false;
 
     if(tHit <= 0.0) return false;
 

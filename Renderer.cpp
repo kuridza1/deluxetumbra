@@ -206,8 +206,8 @@ void Renderer::buildScene()
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
 
 	//Front wall
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
+    /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
+    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
 
     //// Small box
     //m = glm::mat4(1.0f);
