@@ -42,11 +42,19 @@ vec3 traceReflection(vec3 origin, vec3 direction)
 
         float shadow = computeShadow(hitPos, hitNormal, lightPos, vec3(1,0,0), vec3(0,1,0));
 
-        vec3 lightDir = normalize(lightPos - hitPos);
-        float diff = max(dot(hitNormal, lightDir), 0.0);
+        vec3 direct = evaluateLighting(
+            hitPos,
+            hitNormal,
+            baseColor,
+            vec3(emission),
+            refl,
+            lightPos,
+            viewPos,
+            vec3(1.0, 0.88, 0.70),
+            shadow
+        ).color;
 
-        vec3 direct = baseColor * diff * shadow;
-        direct += baseColor * emission;
+
 
         result += throughput * direct;
 
