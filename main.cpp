@@ -68,6 +68,7 @@ int main()
         glm::mat4 view       = camera.GetViewMatrix();
         glm::mat4 projection = camera.GetProjectionMatrix((float)mode->width / mode->height);
 
+
         renderer.geometryPass(view, projection);
         renderer.shadowPass(lightPos);
 		renderer.reflectionPass(camera.Position, lightPos);
