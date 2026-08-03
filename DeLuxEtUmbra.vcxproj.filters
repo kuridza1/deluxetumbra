@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{a0d42805-3653-49f7-9c11-3b9be934627d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="external\glad\src\glad.c">
@@ -68,6 +71,15 @@
     </None>
     <None Include="denoise.comp">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\lighting.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\bvh.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\shadows.glsl">
+      <Filter>shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

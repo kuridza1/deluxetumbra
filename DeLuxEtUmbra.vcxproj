@@ -154,6 +154,9 @@
     <None Include="lighting.vert" />
     <None Include="packages.config" />
     <None Include="reflection.comp" />
+    <None Include="shaders\bvh.glsl" />
+    <None Include="shaders\lighting.glsl" />
+    <None Include="shaders\shadows.glsl" />
     <None Include="shadow.comp" />
   </ItemGroup>
   <ItemGroup>

@@ -183,11 +183,11 @@ void Renderer::buildScene()
 
     // Floor
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(0.8f), 0.0f, 1.0f);
 
     // Ceiling
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.5f, 0.0f)), glm::vec3(5.0f, 0.02f, 5.0f));
-    addObject(m, glm::vec3(1.0f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(1.0f), 0.0f, 1.0f);
 
     // Light
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.4f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
@@ -195,15 +195,15 @@ void Renderer::buildScene()
 
     // Left wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(0.75f, 0.1f, 0.1f), 0.0f, 1.0f);
 
     // Right wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 2.0f, 0.0f)), glm::vec3(0.02f, 5.0f, 5.0f));
-    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(0.1f, 0.75f, 0.1f), 0.0f, 1.0f);
 
     // Back wall
     m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, -2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
-    addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);
+    addObject(m, glm::vec3(0.8f), 0.0f, 1.0f);
 
 	//Front wall
     /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
@@ -234,19 +234,19 @@ void Renderer::buildScene()
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-1.0f, 0.0f, 1.0f));
     m = glm::scale(m, glm::vec3(1.0f));
-    addObject(m, glm::vec3(0.0f, 1.0f, 1.0f), 0.0f, 0.2f, Sphere);
+    addObject(m, glm::vec3(0.0f, 1.0f, 1.0f), 0.0f, 1.0f, Sphere);
 
     // Sphere 2
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(0.8f, 0.9f, -0.8f));
     m = glm::scale(m, glm::vec3(1.3f));
-    addObject(m, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.2f, Sphere);
+    addObject(m, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 1.0f, Sphere);
 
     // Sphere 3
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(1.3f, 0.5f, 1.4f));
     m = glm::scale(m, glm::vec3(0.7f));
-    addObject(m, glm::vec3(1.0f, 0.0f, 1.0f), 0.0f, 0.2f, Sphere);
+    addObject(m, glm::vec3(1.0f, 0.0f, 1.0f), 0.0f, 1.0f, Sphere);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();

@@ -4,6 +4,9 @@
 
 class Shader
 {
+private:
+    std::string loadShaderFile(const char* path);
+
 public:
     unsigned int ID;
 
