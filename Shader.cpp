@@ -21,24 +21,32 @@ std::string Shader::loadShaderFile(const char* path)
 
     std::string source = stream.str();
 
-    const std::string includeToken = "#include \"lighting.glsl\"";
+    size_t pos = 0;
 
-    size_t pos = source.find(includeToken);
-
-    if (pos != std::string::npos)
+    while ((pos = source.find("#include \"", pos)) != std::string::npos)
     {
-        std::ifstream includeFile("shaders/lighting.glsl");
+        size_t start = pos + 10;
+        size_t end = source.find("\"", start);
+
+        if (end == std::string::npos)
+            break;
+
+        std::string filename = source.substr(start, end - start);
+
+        std::ifstream includeFile("shaders/" + filename);
 
         if (!includeFile.is_open())
         {
-            std::cerr << "Failed to open lighting.glsl\n";
-            return source;
+            std::cerr << "Failed to open include: " << filename << std::endl;
+            break;
         }
 
         std::stringstream includeStream;
         includeStream << includeFile.rdbuf();
 
-        source.replace(pos, includeToken.length(), includeStream.str());
+        source.replace(pos, end - pos + 1, includeStream.str());
+
+        pos += includeStream.str().length();
     }
 
     return source;
@@ -176,6 +184,17 @@ Shader::Shader(const char* computePath)
         nullptr);
 
     glCompileShader(shader);
+
+    GLint success;
+    char infoLog[512];
+
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+        std::cerr << "Compute shader compilation failed:\n" << infoLog << std::endl;
+    }
 
     ID = glCreateProgram();
 
