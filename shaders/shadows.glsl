@@ -44,15 +44,9 @@ float computeShadow(
 
         int hitObject;
         float hitDistance;
+        vec3 hitNormal;
 
-
-        bool blocked = traverseBVH(
-            rayOrigin,
-            rayDir,
-            lightDistance,
-            hitObject,
-            hitDistance
-        );
+        bool blocked = traverseBVH(rayOrigin, rayDir, lightDistance, hitObject, hitDistance, hitNormal);
 
 
         if(!blocked)

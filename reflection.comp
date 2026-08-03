@@ -6,205 +6,108 @@ layout(binding = 0) uniform sampler2D gPosition;
 layout(binding = 1) uniform sampler2D gNormal;
 layout(binding = 4) uniform sampler2D gReflectivity;
 
-layout(rgba16f, binding = 0) uniform image2D reflectionTexture;
+layout(rgba16f,binding=0) uniform image2D reflectionTexture;
+
 
 uniform vec3 viewPos;
 uniform vec3 lightPos;
 
-struct BVHNode
+
+#include "bvh.glsl"
+#include "shadows.glsl"
+#include "lighting.glsl"
+
+
+
+vec3 traceReflection(vec3 origin, vec3 direction)
 {
-    vec4 min;
-    vec4 max;
-    int left;
-    int right;
-    int object;
-    int leaf;
-};
+    int hitObject;
+    float hitDistance;
+    vec3 hitNormal;
 
-layout(std430, binding = 2) buffer BVHBuffer
-{
-    BVHNode nodes[];
-};
 
-struct GPUObject
-{
-    mat4 inverseModel;
-    vec4 color;
-    int type;
-    float emission;
-    vec2 _pad;
-};
+    if(!traverseBVH(origin,direction,100.0,hitObject,hitDistance,hitNormal))
+        return vec3(0.0);
 
-layout(std430, binding = 3) buffer ObjectBuffer
-{
-    GPUObject objects[];
-};
 
-bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit, out vec3 normal)
-{
-    vec3 invRd = 1.0 / rd;
-    vec3 t0 = (bmin - ro) * invRd;
-    vec3 t1 = (bmax - ro) * invRd;
-    vec3 tMin = min(t0, t1);
-    vec3 tMax = max(t0, t1);
 
-    float tEnter = max(max(tMin.x, tMin.y), tMin.z);
-    float tExit = min(min(tMax.x, tMax.y), tMax.z);
+    vec3 hitPos = origin + direction * hitDistance;
 
-    if(tExit < max(tEnter, 0.0)) return false;
 
-    tHit = tEnter;
+    vec3 baseColor = objects[hitObject].color.rgb;
 
-    if(tMin.x > tMin.y && tMin.x > tMin.z) normal = vec3(invRd.x < 0.0 ? 1.0 : -1.0, 0.0, 0.0);
-    else if(tMin.y > tMin.z) normal = vec3(0.0, invRd.y < 0.0 ? 1.0 : -1.0, 0.0);
-    else normal = vec3(0.0, 0.0, invRd.z < 0.0 ? 1.0 : -1.0);
+    float emission = objects[hitObject].emission;
 
-    return true;
+
+
+    float shadow = computeShadow(
+        hitPos,
+        hitNormal,
+        lightPos,
+        vec3(1,0,0),
+        vec3(0,1,0)
+    );
+
+
+    vec3 lightDir = normalize(lightPos-hitPos);
+
+    float diff = max(dot(hitNormal,lightDir),0.0);
+
+
+    vec3 color = baseColor * diff * shadow;
+
+    color += baseColor * emission;
+
+
+    return color;
 }
 
-bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit, out vec3 worldNormal)
-{
-    vec3 localOrigin = (invModel * vec4(rayOrigin, 1.0)).xyz;
-    vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
-    vec3 localNormal;
-
-    float localT;
-
-    if(!intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), localT, localNormal)) return false;
-
-    vec3 localHit = localOrigin + localDir * localT;
-    vec3 worldHit = (inverse(invModel) * vec4(localHit, 1.0)).xyz;
-
-    tHit = length(worldHit - rayOrigin);
-
-    worldNormal = normalize((transpose(invModel) * vec4(localNormal, 0.0)).xyz);
-    if(dot(worldNormal, rayDir) > 0.0)
-        worldNormal = -worldNormal;
-    return true;
-}
-
-bool intersectSphere(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit, out vec3 worldNormal)
-{
-    vec3 ro = (invModel * vec4(rayOrigin, 1.0)).xyz;
-    vec3 rd = normalize((invModel * vec4(rayDir, 0.0)).xyz);
-
-    float a = dot(rd, rd);
-    float b = 2.0 * dot(ro, rd);
-    float c = dot(ro, ro) - 0.25;
-
-    float d = b * b - 4.0 * a * c;
-
-    if(d < 0.0) return false;
-
-    float sqrtD = sqrt(d);
-    float t0 = (-b - sqrtD) / (2.0 * a);
-    float t1 = (-b + sqrtD) / (2.0 * a);
-
-    tHit = min(t0, t1);
-    if(tHit < 0.0) tHit = max(t0, t1);
-    if(tHit < 0.0) return false;
-
-    if(tHit <= 0.0) return false;
-
-    vec3 localHit = ro + rd * tHit;
-    vec3 localNormal = normalize(localHit);
-
-    worldNormal = normalize((transpose(invModel) * vec4(localNormal, 0.0)).xyz);
-
-    return true;
-}
-
-bool intersectBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObject, out float closestHit, out vec3 hitNormal)
-{
-    int stack[64];
-    int stackPtr = 0;
-    stack[stackPtr++] = 0;
-
-    hitObject = -1;
-    closestHit = maxDistance;
-
-    while(stackPtr > 0)
-    {
-        int nodeIndex = stack[--stackPtr];
-        BVHNode node = nodes[nodeIndex];
-
-        float nodeDistance;
-        vec3 dummyNormal;
-
-        if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeDistance, dummyNormal)) continue;
-        if(nodeDistance > closestHit) continue;
-
-        if(node.leaf == 1)
-        {
-            float objectDistance;
-            vec3 objectNormal;
-            bool objectHit = false;
-
-            if(objects[node.object].type == 0) objectHit = intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectDistance, objectNormal);
-            else objectHit = intersectSphere(rayOrigin, rayDir, objects[node.object].inverseModel, objectDistance, objectNormal);
-
-            if(objectHit && objectDistance > 0.0 && objectDistance < closestHit)
-            {
-                closestHit = objectDistance;
-                hitObject = node.object;
-                hitNormal = objectNormal;
-            }
-        }
-        else
-        {
-            if(node.left >= 0) stack[stackPtr++] = node.left;
-            if(node.right >= 0) stack[stackPtr++] = node.right;
-        }
-    }
-
-    return hitObject >= 0;
-}
 
 
 void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+
     ivec2 size = imageSize(reflectionTexture);
 
-    if(pixel.x >= size.x || pixel.y >= size.y) return;
 
-    vec3 fragPos = texelFetch(gPosition, pixel, 0).rgb;
-    vec3 normal = normalize(texelFetch(gNormal, pixel, 0).rgb);
+    if(pixel.x >= size.x || pixel.y >= size.y)
+        return;
 
-    float reflectivity = texelFetch(gReflectivity, pixel, 0).r;
+
+
+    vec3 fragPos = texelFetch(gPosition,pixel,0).rgb;
+
+    vec3 normal = normalize(texelFetch(gNormal,pixel,0).rgb);
+
+
+    float reflectivity = texelFetch(gReflectivity,pixel,0).r;
+
+
 
     if(reflectivity <= 0.0)
     {
-        imageStore(reflectionTexture, pixel, vec4(0.0));
+        imageStore(reflectionTexture,pixel,vec4(0));
         return;
     }
 
-    vec3 viewDir = normalize(viewPos - fragPos);
-    vec3 reflectionDir = normalize(reflect(-viewDir, normal));
-    vec3 rayOrigin = fragPos + normal * 0.05;
 
-    int hitObject;
-    float hitDistance;
-    vec3 hitNormal;
 
-    vec3 reflectionColor = vec3(0.0);
+    vec3 viewDir = normalize(viewPos-fragPos);
 
-    bool hit = intersectBVH(rayOrigin, reflectionDir, 100.0, hitObject, hitDistance, hitNormal);
+    vec3 reflectionDir = normalize(reflect(-viewDir,normal));
 
-    if(hit)
-    {
-        
-        vec3 hitPos = rayOrigin + reflectionDir * hitDistance;
-        vec3 lightDir = normalize(lightPos - hitPos);
-        float diffuse = max(dot(hitNormal, lightDir), 0.0);
 
-        vec3 baseColor = objects[hitObject].color.rgb;
-        float emissionStrength = objects[hitObject].emission;
+    vec3 origin = fragPos + normal*0.05;
 
-        vec3 litColor = baseColor * (0.6 + diffuse * 0.4);
-        vec3 emissiveColor = baseColor * emissionStrength * 2.0; 
 
-        reflectionColor = litColor + emissiveColor;
-        }
 
-    imageStore(reflectionTexture, pixel, vec4(reflectionColor, 1.0));}
+    vec3 color = traceReflection(origin,reflectionDir);
+
+
+    imageStore(
+        reflectionTexture,
+        pixel,
+        vec4(color*reflectivity,1.0)
+    );
+}

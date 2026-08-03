@@ -22,6 +22,8 @@ struct GPUObject
     mat4 inverseModel;
     vec4 color;
     int type;
+    float emission;
+    vec2 _pad;
 };
 
 layout(std430, binding = 3) buffer ObjectBuffer
@@ -30,7 +32,7 @@ layout(std430, binding = 3) buffer ObjectBuffer
 };
 
 
-bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit)
+bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit, out vec3 normal)
 {
     vec3 invRd = 1.0 / rd;
 
@@ -43,52 +45,102 @@ bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit)
     float tEnter = max(max(tMin.x, tMin.y), tMin.z);
     float tExit = min(min(tMax.x, tMax.y), tMax.z);
 
-    tHit = tEnter;
-
-    return tExit > max(tEnter, 0.0);
-}
-
-
-bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit)
-{
-    vec3 localOrigin = (invModel * vec4(rayOrigin, 1.0)).xyz;
-    vec3 localDir = normalize((invModel * vec4(rayDir, 0.0)).xyz);
-
-    return intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), tHit);
-}
-
-
-bool intersectSphere(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit)
-{
-    vec3 ro = (invModel * vec4(rayOrigin, 1.0)).xyz;
-    vec3 rd = normalize((invModel * vec4(rayDir, 0.0)).xyz);
-
-    float a = dot(rd, rd);
-    float b = 2.0 * dot(ro, rd);
-    float c = dot(ro, ro) - 0.25;
-
-    float discriminant = b * b - 4.0 * a * c;
-
-    if(discriminant < 0.0)
+    if(tExit < max(tEnter, 0.0))
         return false;
 
-    float s = sqrt(discriminant);
+    tHit = tEnter;
 
-    float t0 = (-b - s) / (2.0 * a);
-    float t1 = (-b + s) / (2.0 * a);
+    if(tMin.x > tMin.y && tMin.x > tMin.z)
+        normal = vec3(invRd.x < 0.0 ? 1.0 : -1.0, 0.0, 0.0);
+    else if(tMin.y > tMin.z)
+        normal = vec3(0.0, invRd.y < 0.0 ? 1.0 : -1.0, 0.0);
+    else
+        normal = vec3(0.0, 0.0, invRd.z < 0.0 ? 1.0 : -1.0);
 
-    tHit = t0 > 0.0 ? t0 : t1;
-
-    return tHit > 0.0;
+    return true;
 }
 
 
-bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObject, out float closestHit)
+bool intersectBox(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit, out vec3 worldNormal)
+{
+    vec3 localOrigin = (invModel * vec4(rayOrigin,1.0)).xyz;
+    vec3 localDir = normalize((invModel * vec4(rayDir,0.0)).xyz);
+
+    vec3 localNormal;
+    float localT;
+
+    if(!intersectAABB(localOrigin, localDir, vec3(-0.5), vec3(0.5), localT, localNormal))
+        return false;
+
+
+    vec3 localHit = localOrigin + localDir * localT;
+    vec3 worldHit = (inverse(invModel) * vec4(localHit,1.0)).xyz;
+
+    tHit = length(worldHit - rayOrigin);
+
+    worldNormal = normalize((transpose(invModel) * vec4(localNormal,0.0)).xyz);
+
+    if(dot(worldNormal, rayDir) > 0.0)
+        worldNormal = -worldNormal;
+
+    return true;
+}
+
+
+
+bool intersectSphere(vec3 rayOrigin, vec3 rayDir, mat4 invModel, out float tHit, out vec3 worldNormal)
+{
+    vec3 ro = (invModel * vec4(rayOrigin,1.0)).xyz;
+    vec3 rd = normalize((invModel * vec4(rayDir,0.0)).xyz);
+
+
+    float a = dot(rd,rd);
+    float b = 2.0 * dot(ro,rd);
+    float c = dot(ro,ro)-0.25;
+
+
+    float d = b*b-4.0*a*c;
+
+    if(d < 0.0)
+        return false;
+
+
+    float sqrtD = sqrt(d);
+
+    float t0 = (-b-sqrtD)/(2.0*a);
+    float t1 = (-b+sqrtD)/(2.0*a);
+
+
+    float t = t0;
+
+    if(t < 0.0)
+        t = t1;
+
+    if(t < 0.0)
+        return false;
+
+
+    vec3 localHit = ro + rd*t;
+
+    worldNormal = normalize((transpose(invModel)*vec4(normalize(localHit),0.0)).xyz);
+
+    vec3 worldHit = (inverse(invModel)*vec4(localHit,1.0)).xyz;
+
+    tHit = length(worldHit-rayOrigin);
+
+    return true;
+}
+
+
+
+bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObject, out float closestHit, out vec3 hitNormal)
 {
     int stack[64];
+
     int stackPtr = 0;
 
     stack[stackPtr++] = 0;
+
 
     hitObject = -1;
     closestHit = maxDistance;
@@ -100,30 +152,40 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
 
         BVHNode node = nodes[nodeIndex];
 
-        float nodeHit;
 
-        if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeHit))
+        float nodeHit;
+        vec3 dummyNormal;
+
+
+        if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeHit, dummyNormal))
             continue;
+
 
         if(nodeHit > closestHit)
             continue;
 
 
+
         if(node.leaf == 1)
         {
             float objectHit;
-            bool hit;
+            vec3 objectNormal;
+
+            bool hit = false;
+
 
             if(objects[node.object].type == 0)
-                hit = intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit);
+                hit = intersectBox(rayOrigin,rayDir,objects[node.object].inverseModel,objectHit,objectNormal);
             else
-                hit = intersectSphere(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit);
+                hit = intersectSphere(rayOrigin,rayDir,objects[node.object].inverseModel,objectHit,objectNormal);
+
 
 
             if(hit && objectHit > 0.0 && objectHit < closestHit)
             {
                 closestHit = objectHit;
                 hitObject = node.object;
+                hitNormal = objectNormal;
             }
         }
         else
@@ -136,7 +198,9 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
         }
     }
 
+
     return hitObject >= 0;
 }
+
 
 #endif
