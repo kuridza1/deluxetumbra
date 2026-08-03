@@ -23,6 +23,7 @@ struct GPUObject
     vec4 color;
     int type;
     float emission;
+    float reflectivity;
     vec2 _pad;
 };
 

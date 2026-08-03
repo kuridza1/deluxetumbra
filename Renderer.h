@@ -65,7 +65,8 @@ struct GPUObject
     glm::vec4 color;        // 16 B
     int type;               // 4 B
     float emission;         // 4 B
-    float _pad[2];          // 8 B — poravnanje do 96 B
+    float reflectivity;
+    float _pad[5];          // 8 B — poravnanje do 96 B
 };
 
 class Renderer

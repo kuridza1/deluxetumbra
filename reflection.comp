@@ -17,49 +17,49 @@ uniform vec3 lightPos;
 #include "shadows.glsl"
 #include "lighting.glsl"
 
+#define MAX_BOUNCES 3
 
 
 vec3 traceReflection(vec3 origin, vec3 direction)
 {
-    int hitObject;
-    float hitDistance;
-    vec3 hitNormal;
+    vec3 result = vec3(0.0);
+    vec3 throughput = vec3(1.0);
 
+    for(int bounce = 0; bounce < MAX_BOUNCES; bounce++)
+    {
+        int hitObject;
+        float hitDistance;
+        vec3 hitNormal;
 
-    if(!traverseBVH(origin,direction,100.0,hitObject,hitDistance,hitNormal))
-        return vec3(0.0);
+        if(!traverseBVH(origin, direction, 100.0, hitObject, hitDistance, hitNormal))
+            break;
 
+        vec3 hitPos = origin + direction * hitDistance;
 
+        vec3 baseColor = objects[hitObject].color.rgb;
+        float emission = objects[hitObject].emission;
+        float refl = objects[hitObject].reflectivity;
 
-    vec3 hitPos = origin + direction * hitDistance;
+        float shadow = computeShadow(hitPos, hitNormal, lightPos, vec3(1,0,0), vec3(0,1,0));
 
+        vec3 lightDir = normalize(lightPos - hitPos);
+        float diff = max(dot(hitNormal, lightDir), 0.0);
 
-    vec3 baseColor = objects[hitObject].color.rgb;
+        vec3 direct = baseColor * diff * shadow;
+        direct += baseColor * emission;
 
-    float emission = objects[hitObject].emission;
+        result += throughput * direct;
 
+        if(refl <= 0.0)
+            break;
 
+        throughput *= refl;
 
-    float shadow = computeShadow(
-        hitPos,
-        hitNormal,
-        lightPos,
-        vec3(1,0,0),
-        vec3(0,1,0)
-    );
+        direction = normalize(reflect(direction, hitNormal));
+        origin = hitPos + hitNormal * 0.05;
+    }
 
-
-    vec3 lightDir = normalize(lightPos-hitPos);
-
-    float diff = max(dot(hitNormal,lightDir),0.0);
-
-
-    vec3 color = baseColor * diff * shadow;
-
-    color += baseColor * emission;
-
-
-    return color;
+    return result;
 }
 
 

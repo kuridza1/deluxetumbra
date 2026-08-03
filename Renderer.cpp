@@ -636,7 +636,7 @@ void Renderer::uploadBVH()
         gpu.color = glm::vec4(obj.color, 1.0f);
         gpu.type = obj.type;
         gpu.emission = obj.emission;
-
+        gpu.reflectivity = obj.reflectivity;
         gpuObjects.push_back(gpu);
     }
 
