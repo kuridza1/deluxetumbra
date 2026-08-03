@@ -46,43 +46,51 @@ vec3 computeColorBleed(vec3 fragPos, vec3 normal)
 void main()
 {
     vec3 FragPos = texture(gPosition, TexCoords).rgb;
-    vec3 Normal   = normalize(texture(gNormal, TexCoords).rgb);
-    vec3 Albedo   = texture(gAlbedo, TexCoords).rgb;
+    vec3 Normal = normalize(texture(gNormal, TexCoords).rgb);
+    vec3 Albedo = texture(gAlbedo, TexCoords).rgb;
     vec3 emission = texture(gEmission, TexCoords).rgb;
 
-    vec3 result = Albedo * 0.08;
+    vec3 result = Albedo * 0.12;
 
     vec3 lightVector = lightPos - FragPos;
     float distance = length(lightVector);
     vec3 lightDir = normalize(lightVector);
 
     float ndotl = dot(Normal, lightDir);
-    float diff = smoothstep(-0.6, 0.6, ndotl);
-    float attenuation = 1.0 / (1.0 + 0.4 * distance + 0.25 * distance * distance);
+    float diff = smoothstep(-0.3, 0.8, ndotl);
 
-    vec3 diffuse = diff * Albedo * lightColor ;
+    float attenuation = 1.0 / (1.0 + 0.35 * distance + 0.18 * distance * distance);
+
+    vec3 diffuse = diff * Albedo * lightColor;
 
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    float shininess = 64.0;
+
+    float shininess = 96.0;
     float specBase = pow(max(dot(Normal, halfwayDir), 0.0), shininess);
 
     float reflectivityMask = texture(gReflectivity, TexCoords).r;
-    float specStrength = mix(0.3, 1.0, reflectivityMask);
+    float specStrength = mix(0.15, 1.0, reflectivityMask);
+
     vec3 specular = lightColor * specBase * specStrength;
 
     vec3 direct = (diffuse + specular) * attenuation * 2.0;
 
-    float shadow = texture(shadowMask, TexCoords).r;
-    float shadowSoft = smoothstep(0.0, 1.0, shadow);
 
-    direct *= mix(0.4, 1.0, shadowSoft);
-    vec3 bleed = computeColorBleed(FragPos, Normal) * Albedo;
+    float shadow = texture(shadowMask, TexCoords).r;
+    float shadowSoft = smoothstep(0.15, 1.0, shadow);
+
+    direct *= mix(0.05, 1.0, shadowSoft);
+
+
+    vec3 bleed = computeColorBleed(FragPos, Normal) * Albedo * 0.5;
+
 
     result += direct + emission + bleed;
+
+
     vec3 reflection = texture(reflectionTexture, TexCoords).rgb;
     float reflectivity = texture(gReflectivity, TexCoords).r;
-
 
     result = mix(result, reflection, reflectivity);
 

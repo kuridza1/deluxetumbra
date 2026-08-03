@@ -37,19 +37,19 @@ static float cubeVertices[] =
      0.5f,-0.5f, 0.5f,    1.0f, 0.0f, 0.0f,
      0.5f, 0.5f, 0.5f,    1.0f, 0.0f, 0.0f,
 
-    -0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
-     0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
-     0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
-     0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
-    -0.5f,-0.5f, 0.5f,    0.0f,1.0f, 0.0f,
-    -0.5f,-0.5f,-0.5f,    0.0f,1.0f, 0.0f,
+    -0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
+     0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
+     0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
+     0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
+    -0.5f,-0.5f, 0.5f,    0.0f,-1.0f, 0.0f,
+    -0.5f,-0.5f,-0.5f,    0.0f,-1.0f, 0.0f,
 
-    -0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f,
-     0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f,
-     0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
-     0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f,    0.0f, -1.0f, 0.0f,
-    -0.5f, 0.5f,-0.5f,    0.0f, -1.0f, 0.0f
+    -0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f,
+     0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f,
+     0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
+     0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
+    -0.5f, 0.5f, 0.5f,    0.0f, 1.0f, 0.0f,
+    -0.5f, 0.5f,-0.5f,    0.0f, 1.0f, 0.0f
 };
 
 static float quadVertices[] =
@@ -190,7 +190,7 @@ void Renderer::buildScene()
     addObject(m, glm::vec3(1.0f), 0.0f, 0.0f);
 
     // Light
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.40f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.4f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
     addObject(m, glm::vec3(1.0f), 5.0f, 0.0f);
 
     // Left wall
@@ -209,7 +209,7 @@ void Renderer::buildScene()
     /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
 
-    //// Small box
+    // Small box
     //m = glm::mat4(1.0f);
     //m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
     //m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -223,7 +223,7 @@ void Renderer::buildScene()
     //m = glm::scale(m, glm::vec3(1.3f, 3.0f, 1.3f));
     //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
-    //// Smallest box
+    // Smallest box
     //m = glm::mat4(1.0f);
     //m = glm::translate(m, glm::vec3(1.0f, 0.0f, 1.5f));
     //m = glm::rotate(m, glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -234,19 +234,19 @@ void Renderer::buildScene()
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-1.0f, 0.0f, 1.0f));
     m = glm::scale(m, glm::vec3(1.0f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f, Sphere);
+    addObject(m, glm::vec3(0.0f, 1.0f, 1.0f), 0.0f, 0.2f, Sphere);
 
     // Sphere 2
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(0.8f, 0.9f, -0.8f));
     m = glm::scale(m, glm::vec3(1.3f));
-    addObject(m, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 1.0f, Sphere);
+    addObject(m, glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.2f, Sphere);
 
     // Sphere 3
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(1.3f, 0.5f, 1.4f));
     m = glm::scale(m, glm::vec3(0.7f));
-    addObject(m, glm::vec3(0.85f), 0.0f, 1.0f, Sphere);
+    addObject(m, glm::vec3(1.0f, 0.0f, 1.0f), 0.0f, 0.2f, Sphere);
 
     buildBVH(0, shadowObjects.size());
     uploadBVH();
