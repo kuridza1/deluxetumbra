@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Renderer.h"
-#include <GLFW/glfw3.h>
+#include <../external/glfw/include/GLFW/glfw3.h>
 #include "Camera.h"
 
 

@@ -77,7 +77,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="assets\shaders\glsl\ao.glsl">
       <Filter>shaders\glsl</Filter>
     </None>

@@ -1,6 +1,6 @@
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include <../external/glfw/include/GLFW/glfw3.h>
+#include <../external/glm/glm/glm.hpp>
 #include <iostream>
 
 #include "../include/Camera.h"

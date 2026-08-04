@@ -1,6 +1,6 @@
 #include "../include/Camera.h"
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <../external/glm/glm/gtc/matrix_transform.hpp>
 
 enum Camera_Movement {
     FORWARD,

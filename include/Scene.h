@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <../external/glm/glm/glm.hpp>
 #include <vector>
 #include <glad/glad.h>
 #include "BVH.h"

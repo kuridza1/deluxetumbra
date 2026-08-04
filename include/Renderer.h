@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
+#include <../external/glm/glm/glm.hpp>
 #include <vector>
 #include "Shader.h"
 #include "GBuffer.h"

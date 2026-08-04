@@ -1,7 +1,7 @@
 #include "../include/Renderer.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <../external/glm/glm/gtc/matrix_transform.hpp>
+#include <../external/glm/glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <limits>
 #include <algorithm>
