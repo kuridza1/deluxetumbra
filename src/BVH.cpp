@@ -1,4 +1,4 @@
-#include "BVH.h"
+#include "../include/BVH.h"
 #include <iostream>
 #include <algorithm>
 
@@ -112,6 +112,11 @@ void BVH::uploadBVH()
     glBufferData(GL_SHADER_STORAGE_BUFFER, gpuNodes.size() * sizeof(GPUBVHNode), gpuNodes.data(), GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvhSSBO);
 
+    uploadObjects(); 
+}
+
+void BVH::uploadObjects()
+{
     std::vector<GPUObject> gpuObjects;
     gpuObjects.reserve(sceneObjects.size());
 
@@ -130,8 +135,7 @@ void BVH::uploadBVH()
         glGenBuffers(1, &objectSSBO);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, objectSSBO);
-
-    glBufferData(GL_SHADER_STORAGE_BUFFER, gpuObjects.size() * sizeof(GPUObject), gpuObjects.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, gpuObjects.size() * sizeof(GPUObject), gpuObjects.data(), GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, objectSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }

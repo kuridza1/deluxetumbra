@@ -1,10 +1,14 @@
-#include "Renderer.h"
+#include "../include/Renderer.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <limits>
 #include <algorithm>
+#include <string>
+#include "../external/imgui/imgui.h"
+#include <filesystem>
+#include <filesystem>
 
 static float cubeVertices[] =
 {
@@ -73,12 +77,12 @@ bool Renderer::init(int width, int height)
     scene.createQuad(quadVertices);
     scene.createSphere();
 
-    geometryShader = new Shader("geometry.vert", "geometry.frag");
-    lightingShader = new Shader("lighting.vert",  "lighting.frag");
-    shadowShader = new Shader("shadow.comp");
-    aoShader = new Shader("ao.comp");
-    reflectionShader = new Shader("reflection.comp");
-    denoiseShader = new Shader("denoise.comp");
+    geometryShader = new Shader("assets/shaders/geometry.vert", "assets/shaders/geometry.frag");
+    lightingShader = new Shader("assets/shaders/lighting.vert",  "assets/shaders/lighting.frag");
+    shadowShader = new Shader("assets/shaders/compute/shadow.comp");
+    aoShader = new Shader("assets/shaders/compute/ao.comp");
+    reflectionShader = new Shader("assets/shaders/compute/reflection.comp");
+    denoiseShader = new Shader("assets/shaders/compute/denoise.comp");
 
     scene.buildScene(bvh);
 
@@ -318,4 +322,21 @@ void Renderer::setRenderMode(RenderMode mode)
 RenderMode Renderer::getRenderMode() const
 {
     return renderMode;
+}
+
+void Renderer::drawMaterialUI()
+{
+    ImGui::Text("Cornell Box Controls");
+
+    for (int i = 0; i < (int)bvh.sceneObjects.size(); i++)
+    {
+        SceneObject& obj = bvh.sceneObjects[i];
+
+        std::string label = "Object " + std::to_string(i) + " Reflectivity";
+
+        if (ImGui::SliderFloat(label.c_str(), &obj.reflectivity, 0.0f, 1.0f))
+        {
+            bvh.uploadObjects();
+        }
+    }
 }

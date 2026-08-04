@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include;$(ProjectDir)external\imgui;$(ProjectDir)external\imgui\backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,7 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include;$(ProjectDir)external\imgui;$(ProjectDir)external\imgui\backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include;$(ProjectDir)external\imgui;$(ProjectDir)external\imgui\backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)external\glad\include;$(ProjectDir)external\imgui;$(ProjectDir)external\imgui\backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,41 +135,54 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BVH.cpp" />
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="external\glad\src\glad.c" />
-    <ClCompile Include="GBuffer.cpp" />
-    <ClCompile Include="InputHandler.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="external\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="external\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="external\imgui\imgui.cpp" />
+    <ClCompile Include="external\imgui\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui\imgui_tables.cpp" />
+    <ClCompile Include="external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\BVH.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\GBuffer.cpp" />
+    <ClCompile Include="src\InputHandler.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ao.comp" />
-    <None Include="basic.frag" />
-    <None Include="basic.vert" />
-    <None Include="denoise.comp" />
-    <None Include="geometry.frag" />
-    <None Include="geometry.vert" />
-    <None Include="lighting.frag" />
-    <None Include="lighting.vert" />
+    <None Include="assets\shaders\compute\ao.comp" />
+    <None Include="assets\shaders\compute\denoise.comp" />
+    <None Include="assets\shaders\compute\reflection.comp" />
+    <None Include="assets\shaders\compute\shadow.comp" />
+    <None Include="assets\shaders\geometry.frag" />
+    <None Include="assets\shaders\geometry.vert" />
+    <None Include="assets\shaders\glsl\ao.glsl" />
+    <None Include="assets\shaders\glsl\bvh.glsl" />
+    <None Include="assets\shaders\glsl\lighting.glsl" />
+    <None Include="assets\shaders\glsl\shadows.glsl" />
+    <None Include="assets\shaders\lighting.frag" />
+    <None Include="assets\shaders\lighting.vert" />
     <None Include="packages.config" />
-    <None Include="reflection.comp" />
-    <None Include="shaders\ao.glsl" />
-    <None Include="shaders\bvh.glsl" />
-    <None Include="shaders\lighting.glsl" />
-    <None Include="shaders\shadows.glsl" />
-    <None Include="shadow.comp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BVH.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="GBuffer.h" />
-    <ClInclude Include="InputHandler.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="Shader.h" />
+    <ClInclude Include="external\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="external\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="external\imgui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="external\imgui\imconfig.h" />
+    <ClInclude Include="external\imgui\imgui.h" />
+    <ClInclude Include="external\imgui\imgui_internal.h" />
+    <ClInclude Include="external\imgui\imstb_rectpack.h" />
+    <ClInclude Include="external\imgui\imstb_textedit.h" />
+    <ClInclude Include="external\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\BVH.h" />
+    <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\GBuffer.h" />
+    <ClInclude Include="include\InputHandler.h" />
+    <ClInclude Include="include\Renderer.h" />
+    <ClInclude Include="include\Scene.h" />
+    <ClInclude Include="include\Shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

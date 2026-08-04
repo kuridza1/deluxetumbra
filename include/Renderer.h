@@ -30,6 +30,8 @@ public:
 
     void setRenderMode(RenderMode mode);
     RenderMode getRenderMode() const;
+
+    void drawMaterialUI();
 private:
     int screenWidth = 0;
     int screenHeight = 0;

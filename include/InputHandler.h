@@ -19,6 +19,9 @@ private:
     float lastX      = 0.0f;
     float lastY      = 0.0f;
 
+    bool mousePressed = false;
+
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
     Renderer* renderer = nullptr;

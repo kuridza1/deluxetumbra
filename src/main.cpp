@@ -3,9 +3,13 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-#include "Camera.h"
-#include "InputHandler.h"
-#include "Renderer.h"
+#include "../include/Camera.h"
+#include "../include/InputHandler.h"
+#include "../include/Renderer.h"
+
+#include "../external/imgui/imgui.h"
+#include "../external/imgui/backends/imgui_impl_glfw.h"
+#include "../external/imgui/backends/imgui_impl_opengl3.h"
 
 const int WIDTH  = 1280;
 const int HEIGHT = 720;
@@ -38,6 +42,12 @@ int main()
         return -1;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 450");
+
     glEnable(GL_MULTISAMPLE);
     glViewport(0, 0, mode->width, mode->height);
 
@@ -45,7 +55,7 @@ int main()
     InputHandler input;
     Renderer     renderer;
 
-    input.init(window, &camera, &renderer, WIDTH, HEIGHT);
+    input.init(window, &camera, &renderer, mode->width, mode->height);
 
     if (!renderer.init(mode->width, mode->height)) {
         glfwTerminate();
@@ -74,18 +84,34 @@ int main()
         if (renderer.getRenderMode() == RenderMode::Shadows)
         {
             renderer.shadowPass(lightPos);
-            renderer.aoPass(lightPos);
+            //renderer.aoPass(lightPos);
         }
 
         if (renderer.getRenderMode() == RenderMode::Reflections)
         {
             renderer.shadowPass(lightPos);
-			renderer.aoPass(lightPos);
+			//renderer.aoPass(lightPos);
             renderer.reflectionPass(camera.Position, lightPos);
             renderer.denoisePass();
         }
 
         renderer.lightingPass(lightPos, camera.Position);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(350, 500), ImGuiCond_FirstUseEver);
+
+        ImGui::Begin("Material Controls");
+
+        renderer.drawMaterialUI();
+
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();

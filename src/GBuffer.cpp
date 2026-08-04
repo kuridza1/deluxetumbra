@@ -1,4 +1,4 @@
-#include "GBuffer.h"
+#include "../include/GBuffer.h"
 
 bool GBuffer::init(int width, int height)
 {

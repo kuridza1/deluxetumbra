@@ -71,6 +71,7 @@ public:
     AABB computeBounds(const glm::mat4& model);
     int buildBVH(int begin, int end);
     void uploadBVH();
+    void uploadObjects();
 
     void destroy();
 

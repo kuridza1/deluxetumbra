@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "../include/Shader.h"
 
 #include <glad/glad.h>
 
@@ -33,7 +33,7 @@ std::string Shader::loadShaderFile(const char* path)
 
         std::string filename = source.substr(start, end - start);
 
-        std::ifstream includeFile("shaders/" + filename);
+        std::ifstream includeFile("assets/shaders/glsl/" + filename);
 
         if (!includeFile.is_open())
         {

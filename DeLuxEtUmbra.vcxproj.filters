@@ -14,104 +14,155 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="shaders">
-      <UniqueIdentifier>{a0d42805-3653-49f7-9c11-3b9be934627d}</UniqueIdentifier>
+      <UniqueIdentifier>{9962ce97-363e-4794-b41d-3924b826ca74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\glsl">
+      <UniqueIdentifier>{9c9a6850-a09c-4e4e-9b98-a1f937858975}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\compute">
+      <UniqueIdentifier>{0c591bfe-7ad9-4179-a14b-d8df44e1937e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{801dc276-64f8-4be0-8ccc-5cb9cf910869}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui\backends">
+      <UniqueIdentifier>{aea35778-352e-4cb2-9dfd-13e7124ee85f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="external\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="src\BVH.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
+    <ClCompile Include="src\GBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GBuffer.cpp">
+    <ClCompile Include="src\InputHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputHandler.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
+    <ClCompile Include="src\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
+    <ClCompile Include="src\Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BVH.cpp">
+    <ClCompile Include="src\Shader.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>imgui\backends</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="geometry.vert">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\glsl\ao.glsl">
+      <Filter>shaders\glsl</Filter>
     </None>
-    <None Include="geometry.frag">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\glsl\bvh.glsl">
+      <Filter>shaders\glsl</Filter>
     </None>
-    <None Include="basic.frag">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\glsl\lighting.glsl">
+      <Filter>shaders\glsl</Filter>
     </None>
-    <None Include="basic.vert">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\glsl\shadows.glsl">
+      <Filter>shaders\glsl</Filter>
     </None>
-    <None Include="lighting.frag">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\compute\ao.comp">
+      <Filter>shaders\compute</Filter>
     </None>
-    <None Include="lighting.vert">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\compute\denoise.comp">
+      <Filter>shaders\compute</Filter>
     </None>
-    <None Include="shadow.comp">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\compute\reflection.comp">
+      <Filter>shaders\compute</Filter>
     </None>
-    <None Include="reflection.comp">
-      <Filter>Resource Files</Filter>
+    <None Include="assets\shaders\compute\shadow.comp">
+      <Filter>shaders\compute</Filter>
     </None>
-    <None Include="denoise.comp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\lighting.glsl">
+    <None Include="assets\shaders\geometry.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\bvh.glsl">
+    <None Include="assets\shaders\geometry.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\shadows.glsl">
+    <None Include="assets\shaders\lighting.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="ao.comp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\ao.glsl">
+    <None Include="assets\shaders\lighting.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="include\BVH.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
+    <ClInclude Include="include\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GBuffer.h">
+    <ClInclude Include="include\GBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputHandler.h">
+    <ClInclude Include="include\InputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
+    <ClInclude Include="include\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="include\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BVH.h">
+    <ClInclude Include="include\Shader.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\backends\imgui_impl_glfw.h">
+      <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="external\imgui\backends\imgui_impl_opengl3_loader.h">
+      <Filter>imgui\backends</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
