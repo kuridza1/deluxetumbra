@@ -76,6 +76,7 @@ bool Renderer::init(int width, int height)
     geometryShader = new Shader("geometry.vert", "geometry.frag");
     lightingShader = new Shader("lighting.vert",  "lighting.frag");
     shadowShader = new Shader("shadow.comp");
+    aoShader = new Shader("ao.comp");
     reflectionShader = new Shader("reflection.comp");
     denoiseShader = new Shader("denoise.comp");
 
@@ -91,6 +92,13 @@ bool Renderer::init(int width, int height)
     glTexImage2D( GL_TEXTURE_2D,0,GL_R32F,width,height, 0,GL_RED, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenTextures(1, &aoTexture);
+    glBindTexture(GL_TEXTURE_2D, aoTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenTextures(1, &reflectionTexture);
@@ -170,6 +178,8 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "shadowMask"),4);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "reflectionTexture"), 5);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gReflectivity"), 6);
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "aoMask"), 7);
+
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.88f, 0.70f);
@@ -180,6 +190,8 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1f(glGetUniformLocation(lightingShader->ID, "greenWallX"), greenWallX);
     glUniform1f(glGetUniformLocation(lightingShader->ID, "bleedStrength"), bleedStrength);
 
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "renderMode"), static_cast<int>(renderMode));
+
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, gbuffer.gAlbedo);
@@ -187,6 +199,7 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, shadowTexture);
     glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, denoisedReflectionTexture);
     glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
+    glActiveTexture(GL_TEXTURE7);glBindTexture(GL_TEXTURE_2D, aoTexture);
 
     glBindVertexArray(scene.quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -215,6 +228,34 @@ void Renderer::shadowPass(const glm::vec3& lightPos)
     glActiveTexture(GL_TEXTURE5);                       
     glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glBindImageTexture(1, shadowTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+    glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+}
+
+void Renderer::aoPass(const glm::vec3& lightPos)
+{
+    aoShader->use();
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvh.bvhSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bvh.objectSSBO);
+
+    glm::vec3 lightCenter = lightPos;
+    glm::vec3 lightRight(1.0f, 0.0f, 0.0f);
+    glm::vec3 lightUp(0.0f, 0.0f, 0.6f);
+
+    glUniform3fv(glGetUniformLocation(aoShader->ID, "lightCenter"), 1, glm::value_ptr(lightCenter));
+    glUniform3fv(glGetUniformLocation(aoShader->ID, "lightRight"), 1, glm::value_ptr(lightRight));
+    glUniform3fv(glGetUniformLocation(aoShader->ID, "lightUp"), 1, glm::value_ptr(lightUp));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
+
+    glUniform1i(glGetUniformLocation(aoShader->ID, "gPosition"), 0);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
+    glBindImageTexture(1, aoTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
 
@@ -267,4 +308,14 @@ void Renderer::denoisePass()
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
+
+void Renderer::setRenderMode(RenderMode mode)
+{
+    renderMode = mode;
+}
+
+RenderMode Renderer::getRenderMode() const
+{
+    return renderMode;
 }

@@ -42,6 +42,7 @@ vec3 traceReflection(vec3 origin, vec3 direction)
 
         float shadow = computeShadow(hitPos, hitNormal, lightPos, vec3(1,0,0), vec3(0,1,0));
 
+    
         vec3 direct = evaluateLighting(
             hitPos,
             hitNormal,
@@ -51,7 +52,8 @@ vec3 traceReflection(vec3 origin, vec3 direction)
             lightPos,
             viewPos,
             vec3(1.0, 0.88, 0.70),
-            shadow
+            shadow,
+            1.0
         ).color;
 
 

@@ -45,7 +45,7 @@ int main()
     InputHandler input;
     Renderer     renderer;
 
-    input.init(window, &camera, WIDTH, HEIGHT);
+    input.init(window, &camera, &renderer, WIDTH, HEIGHT);
 
     if (!renderer.init(mode->width, mode->height)) {
         glfwTerminate();
@@ -70,9 +70,21 @@ int main()
 
 
         renderer.geometryPass(view, projection);
-        renderer.shadowPass(lightPos);
-		renderer.reflectionPass(camera.Position, lightPos);
-        renderer.denoisePass();
+
+        if (renderer.getRenderMode() == RenderMode::Shadows)
+        {
+            renderer.shadowPass(lightPos);
+            renderer.aoPass(lightPos);
+        }
+
+        if (renderer.getRenderMode() == RenderMode::Reflections)
+        {
+            renderer.shadowPass(lightPos);
+			renderer.aoPass(lightPos);
+            renderer.reflectionPass(camera.Position, lightPos);
+            renderer.denoisePass();
+        }
+
         renderer.lightingPass(lightPos, camera.Position);
 
         glfwSwapBuffers(window);

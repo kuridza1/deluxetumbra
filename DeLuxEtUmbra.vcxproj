@@ -146,6 +146,7 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ao.comp" />
     <None Include="basic.frag" />
     <None Include="basic.vert" />
     <None Include="denoise.comp" />
@@ -155,6 +156,7 @@
     <None Include="lighting.vert" />
     <None Include="packages.config" />
     <None Include="reflection.comp" />
+    <None Include="shaders\ao.glsl" />
     <None Include="shaders\bvh.glsl" />
     <None Include="shaders\lighting.glsl" />
     <None Include="shaders\shadows.glsl" />

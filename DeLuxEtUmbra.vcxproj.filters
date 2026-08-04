@@ -84,6 +84,12 @@
     <None Include="shaders\shadows.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="ao.comp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\ao.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">

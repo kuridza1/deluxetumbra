@@ -17,7 +17,8 @@ LightingResult evaluateLighting(
     vec3 lightPos,
     vec3 viewPos,
     vec3 lightColor,
-    float shadow)
+    float shadow,
+    float ao)
 {
     LightingResult result;
 
@@ -30,7 +31,7 @@ LightingResult evaluateLighting(
 
     float attenuation = 1.0 / (1.0 + 0.35 * distance + 0.18 * distance * distance);
 
-    result.diffuse = diff * albedo * lightColor;
+    result.diffuse = diff * albedo * lightColor ;
 
     vec3 viewDir = normalize(viewPos - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -47,7 +48,7 @@ LightingResult evaluateLighting(
     float shadowSoft = smoothstep(0.15, 1.0, shadow);
     direct *= mix(0.05, 1.0, shadowSoft);
 
-    result.color = albedo * 0.12;
+    result.color = albedo * 0.12 * ao;
     result.color += direct;
     result.color += emission;
 
