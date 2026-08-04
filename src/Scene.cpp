@@ -1,6 +1,6 @@
 #include "../include/Scene.h"
 #include "../include/Shader.h"
-#include <../external/glm/glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 void Scene::destroy()
 {

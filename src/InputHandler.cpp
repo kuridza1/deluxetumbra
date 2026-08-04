@@ -1,8 +1,6 @@
 #include "../include/InputHandler.h"
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/backends/imgui_impl_glfw.h"  
-#include <../external/glfw/include/GLFW/glfw3.h>
-
 #include <iostream>
 
 void InputHandler::init(GLFWwindow* window, Camera* camera, Renderer* renderer, int windowWidth, int windowHeight)
