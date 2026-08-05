@@ -21,7 +21,6 @@ build/
 *.tlog
 *.lastbuildstate
 *.exp
-*.lib
 
 *.user
 *.suo
