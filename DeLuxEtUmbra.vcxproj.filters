@@ -77,7 +77,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="assets\shaders\glsl\ao.glsl">
       <Filter>shaders\glsl</Filter>
     </None>
@@ -113,6 +112,9 @@
     </None>
     <None Include="assets\shaders\lighting.vert">
       <Filter>shaders</Filter>
+    </None>
+    <None Include="assets\shaders\glsl\lights.glsl">
+      <Filter>shaders\glsl</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

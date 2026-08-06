@@ -67,7 +67,7 @@ struct ShadowObject
 };
 struct EmissiveLight
 {
-    glm::vec3 position;
+    glm::vec4 position;
     glm::vec4 colorEmission;
 };
 

@@ -93,7 +93,7 @@
                 continue;
 
             EmissiveLight light;
-            light.position = glm::vec3(obj.model[3]);
+            light.position = glm::vec4(glm::vec3(obj.model[3]), 1.0f);
             light.colorEmission = glm::vec4(obj.color, obj.emission);
 
             emissiveLights.push_back(light);

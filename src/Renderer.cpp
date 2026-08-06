@@ -212,20 +212,15 @@ void Renderer::lightingPass( const glm::vec3& viewPos)
     glBindVertexArray(0);
 }
 
-void Renderer::shadowPass(const glm::vec3& lightPos)
+void Renderer::shadowPass()
 {
     shadowShader->use();
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvh.bvhSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bvh.objectSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, bvh.lightSSBO);   
 
-    glm::vec3 lightCenter = lightPos;
-    glm::vec3 lightRight(1.0f, 0.0f, 0.0f);
-    glm::vec3 lightUp(0.0f, 0.0f, 0.6f);
-
-    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightCenter"), 1, glm::value_ptr(lightCenter));
-    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightRight"), 1, glm::value_ptr(lightRight));
-    glUniform3fv(glGetUniformLocation(shadowShader->ID, "lightUp"), 1, glm::value_ptr(lightUp));
+    glUniform1i(glGetUniformLocation(shadowShader->ID, "lightCount"), (int)bvh.emissiveLights.size()); 
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
@@ -268,7 +263,7 @@ void Renderer::aoPass(const glm::vec3& lightPos)
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 }
 
-void Renderer::reflectionPass(const glm::vec3& viewPos, const glm::vec3& lightPos)
+void Renderer::reflectionPass(const glm::vec3& viewPos)
 {
     reflectionShader->use();
 
@@ -276,7 +271,6 @@ void Renderer::reflectionPass(const glm::vec3& viewPos, const glm::vec3& lightPo
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bvh.objectSSBO);
 
     glUniform3fv(glGetUniformLocation(reflectionShader->ID, "viewPos"), 1, glm::value_ptr(viewPos));
-    glUniform3fv(glGetUniformLocation(reflectionShader->ID, "lightPos"), 1, glm::value_ptr(lightPos)); 
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);

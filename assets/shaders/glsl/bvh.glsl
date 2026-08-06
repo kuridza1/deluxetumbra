@@ -33,6 +33,7 @@ layout(std430, binding = 3) buffer ObjectBuffer
 };
 
 
+
 bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit, out vec3 normal)
 {
     vec3 invRd = 1.0 / rd;

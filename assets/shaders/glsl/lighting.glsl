@@ -1,6 +1,15 @@
 #ifndef LIGHTING_GLSL
 #define LIGHTING_GLSL
 
+#include "lights.glsl"
+
+
+struct LightingResult
+{
+    vec3 color;
+    vec3 diffuse;
+    vec3 specular;
+};
 struct LightingResult
 {
     vec3 color;
@@ -8,18 +17,6 @@ struct LightingResult
     vec3 specular;
 };
 
-struct EmissiveLight
-{
-    vec4 position;      
-    vec4 colorEmission; 
-};
-
-layout(std430, binding = 4) buffer Lights
-{
-    EmissiveLight lights[];
-};
-
-uniform int lightCount;
 
 LightingResult evaluateLighting(
     vec3 fragPos,

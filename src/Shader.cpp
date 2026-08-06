@@ -46,7 +46,6 @@ std::string Shader::loadShaderFile(const char* path)
 
         source.replace(pos, end - pos + 1, includeStream.str());
 
-        pos += includeStream.str().length();
     }
 
     return source;

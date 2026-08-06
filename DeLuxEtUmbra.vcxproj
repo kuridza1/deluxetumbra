@@ -164,6 +164,7 @@
     <None Include="assets\shaders\geometry.vert" />
     <None Include="assets\shaders\glsl\ao.glsl" />
     <None Include="assets\shaders\glsl\bvh.glsl" />
+    <None Include="assets\shaders\glsl\lights.glsl" />
     <None Include="assets\shaders\glsl\lighting.glsl" />
     <None Include="assets\shaders\glsl\shadows.glsl" />
     <None Include="assets\shaders\lighting.frag" />

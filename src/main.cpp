@@ -82,15 +82,15 @@ int main()
 
         if (renderer.getRenderMode() == RenderMode::Shadows)
         {
-            renderer.shadowPass(lightPos);
+            renderer.shadowPass();
             //renderer.aoPass(lightPos);
         }
 
         if (renderer.getRenderMode() == RenderMode::Reflections)
         {
-            renderer.shadowPass(lightPos);
+            renderer.shadowPass();
 			//renderer.aoPass(lightPos);
-            renderer.reflectionPass(camera.Position, lightPos);
+            renderer.reflectionPass(camera.Position);
             renderer.denoisePass();
         }
 
