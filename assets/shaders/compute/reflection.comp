@@ -49,9 +49,7 @@ vec3 traceReflection(vec3 origin, vec3 direction)
             baseColor,
             vec3(emission),
             refl,
-            lightPos,
             viewPos,
-            vec3(1.0, 0.88, 0.70),
             shadow,
             1.0
         ).color;

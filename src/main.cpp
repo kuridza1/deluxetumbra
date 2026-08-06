@@ -62,10 +62,9 @@ int main()
         return -1;
     }
 
-    const glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
-
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+	glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -95,7 +94,7 @@ int main()
             renderer.denoisePass();
         }
 
-        renderer.lightingPass(lightPos, camera.Position);
+        renderer.lightingPass(camera.Position);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

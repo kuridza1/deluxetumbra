@@ -43,12 +43,10 @@ void main()
         Albedo,
         emission,
         reflectivity,
-        lightPos,
         viewPos,
-        lightColor,
         shadow,
-        ao
-    );
+        ao);
+    
 
     vec3 result = lighting.color;
 

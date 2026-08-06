@@ -167,7 +167,7 @@ void Renderer::geometryPass(const glm::mat4& view, const glm::mat4& projection)
 
 
 
-void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
+void Renderer::lightingPass( const glm::vec3& viewPos)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
@@ -184,7 +184,9 @@ void Renderer::lightingPass(const glm::vec3& lightPos, const glm::vec3& viewPos)
     glUniform1i(glGetUniformLocation(lightingShader->ID, "gReflectivity"), 6);
     glUniform1i(glGetUniformLocation(lightingShader->ID, "aoMask"), 7);
 
-    glUniform3f(glGetUniformLocation(lightingShader->ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    glUniform1i(glGetUniformLocation(lightingShader->ID, "lightCount"), (int)bvh.emissiveLights.size());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, bvh.lightSSBO);
+
     glUniform3f(glGetUniformLocation(lightingShader->ID, "viewPos"), viewPos.x, viewPos.y, viewPos.z);
     glUniform3f(glGetUniformLocation(lightingShader->ID, "lightColor"), 1.0f, 0.88f, 0.70f);
 
@@ -324,6 +326,19 @@ RenderMode Renderer::getRenderMode() const
     return renderMode;
 }
 
+const char* objectNames[] =
+{
+    "Floor",
+    "Ceiling",
+    "Light",
+    "Left Wall",
+    "Right Wall",
+    "Back Wall",
+    "Sphere 1",
+    "Sphere 2",
+    "Sphere 3"
+};
+
 void Renderer::drawMaterialUI()
 {
     ImGui::Text("Cornell Box Controls");
@@ -332,11 +347,20 @@ void Renderer::drawMaterialUI()
     {
         SceneObject& obj = bvh.sceneObjects[i];
 
-        std::string label = "Object " + std::to_string(i) + " Reflectivity";
+        ImGui::Text("%s", objectNames[i]);
 
-        if (ImGui::SliderFloat(label.c_str(), &obj.reflectivity, 0.0f, 1.0f))
+        std::string reflectivityLabel = "Reflectivity##" + std::to_string(i);
+        if (ImGui::SliderFloat(reflectivityLabel.c_str(), &obj.reflectivity, 0.0f, 1.0f))
         {
             bvh.uploadObjects();
         }
+
+        std::string emissionLabel = "Emission##" + std::to_string(i);
+        if (ImGui::SliderFloat(emissionLabel.c_str(), &obj.emission, 0.0f, 20.0f))
+        {
+            bvh.uploadObjects();
+        }
+
+        ImGui::Separator();
     }
 }

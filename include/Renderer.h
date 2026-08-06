@@ -8,6 +8,8 @@
 #include "Scene.h"
 #include "BVH.h"
 
+
+
 enum class RenderMode
 {
     Basic = 1,
@@ -24,7 +26,7 @@ public:
     void geometryPass(const glm::mat4& view, const glm::mat4& projection);
     void shadowPass(const glm::vec3& lightPos);
     void aoPass(const glm::vec3& lightPos);
-    void lightingPass( const glm::vec3& lightPos, const glm::vec3& viewPos);
+    void lightingPass(const glm::vec3& viewPos);
     void reflectionPass(const glm::vec3& viewPos, const glm::vec3& lightPos);
     void denoisePass();
 

@@ -65,6 +65,12 @@ struct ShadowObject
     int id;
 
 };
+struct EmissiveLight
+{
+    glm::vec3 position;
+    glm::vec4 colorEmission;
+};
+
 
 class BVH {
 public:
@@ -72,14 +78,16 @@ public:
     int buildBVH(int begin, int end);
     void uploadBVH();
     void uploadObjects();
-
+    void updateEmissiveLights();
+    void uploadLights();
     void destroy();
 
     std::vector<BVHNode> bvhNodes;
     GLuint bvhSSBO = 0;
     GLuint objectSSBO = 0;
+    GLuint lightSSBO = 0;
 
     std::vector<ShadowObject> shadowObjects;
     std::vector<SceneObject> sceneObjects;
-
+    std::vector<EmissiveLight> emissiveLights;
 };
