@@ -43,7 +43,7 @@ LightingResult evaluateLighting(
 
         float attenuation = 1.0 / (1.0 + 0.35 * distance + 0.18 * distance * distance);
 
-        vec3 diffuseTerm = diff * albedo * lightColor * lightEmission;
+        vec3 diffuseTerm = diff * albedo * lightColor * lightEmission / 5;
 
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float shininess = 96.0;

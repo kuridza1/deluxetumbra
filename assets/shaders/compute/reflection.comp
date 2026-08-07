@@ -37,29 +37,30 @@ vec3 traceReflection(vec3 origin, vec3 direction)
 
         vec3 baseColor = objects[hitObject].color.rgb;
         float emission = objects[hitObject].emission;
+        if(emission > 0.0)
+        {
+            return vec3(10.0, 0.0, 0.0);
+        }
         float refl = objects[hitObject].reflectivity;
 
-        float shadow = computeShadow(hitPos, hitNormal);
+        float shadow = computeShadow(hitPos, hitNormal);  
 
-    
+
         vec3 direct = evaluateLighting(
             hitPos,
             hitNormal,
             baseColor,
-            vec3(emission),
+            vec3(0.0),
             refl,
-            viewPos,
-            shadow,
+            hitPos - direction,
+            1.0,
             1.0
         ).color;
-
-
 
         result += throughput * direct;
 
         if(refl <= 0.0)
             break;
-
         throughput *= refl;
 
         direction = normalize(reflect(direction, hitNormal));
@@ -74,23 +75,13 @@ vec3 traceReflection(vec3 origin, vec3 direction)
 void main()
 {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-
     ivec2 size = imageSize(reflectionTexture);
-
-
     if(pixel.x >= size.x || pixel.y >= size.y)
         return;
 
-
-
     vec3 fragPos = texelFetch(gPosition,pixel,0).rgb;
-
     vec3 normal = normalize(texelFetch(gNormal,pixel,0).rgb);
-
-
     float reflectivity = texelFetch(gReflectivity,pixel,0).r;
-
-
 
     if(reflectivity <= 0.0)
     {
@@ -98,19 +89,11 @@ void main()
         return;
     }
 
-
-
     vec3 viewDir = normalize(viewPos-fragPos);
-
     vec3 reflectionDir = normalize(reflect(-viewDir,normal));
-
-
     vec3 origin = fragPos + normal * 0.05;
 
-
-
     vec3 color = traceReflection(origin,reflectionDir);
-
 
     imageStore(
         reflectionTexture,

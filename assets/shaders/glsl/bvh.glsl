@@ -170,9 +170,7 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
 
         if(node.leaf == 1)
         {
-
-            if(objects[node.object].isLight == 1)
-                 continue;
+            
             float objectHit;
             vec3 objectNormal;
             bool hit = false;
