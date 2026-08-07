@@ -38,15 +38,15 @@ struct GPUObject
     glm::mat4 inverseModel;
     glm::vec4 color;
     int type;
+    int isLight;
     float emission;
     float reflectivity;
-    float _pad[5];
 };
 
 enum ObjectType
 {
     Cube = 0,
-    Sphere = 1
+    Sphere = 1,
 };
 
 struct SceneObject
@@ -69,6 +69,8 @@ struct EmissiveLight
 {
     glm::vec4 position;
     glm::vec4 colorEmission;
+    glm::vec4 right;
+    glm::vec4 up;
 };
 
 

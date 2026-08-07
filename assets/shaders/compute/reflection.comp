@@ -105,7 +105,7 @@ void main()
     vec3 reflectionDir = normalize(reflect(-viewDir,normal));
 
 
-    vec3 origin = fragPos + normal*0.05;
+    vec3 origin = fragPos + normal * 0.05;
 
 
 

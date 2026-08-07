@@ -22,9 +22,9 @@ struct GPUObject
     mat4 inverseModel;
     vec4 color;
     int type;
+    int isLight;
     float emission;
     float reflectivity;
-    vec2 _pad;
 };
 
 layout(std430, binding = 3) buffer ObjectBuffer
@@ -50,7 +50,7 @@ bool intersectAABB(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out float tHit, out v
     if(tExit < max(tEnter, 0.0))
         return false;
 
-    tHit = tEnter;
+    tHit = max(tEnter, 0.0);
 
     if(tMin.x > tMin.y && tMin.x > tMin.z)
         normal = vec3(invRd.x < 0.0 ? 1.0 : -1.0, 0.0, 0.0);
@@ -170,18 +170,17 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
 
         if(node.leaf == 1)
         {
+
+            if(objects[node.object].isLight == 1)
+                 continue;
             float objectHit;
             vec3 objectNormal;
-
             bool hit = false;
 
-
             if(objects[node.object].type == 0)
-                hit = intersectBox(rayOrigin,rayDir,objects[node.object].inverseModel,objectHit,objectNormal);
+                hit = intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit, objectNormal);
             else
-                hit = intersectSphere(rayOrigin,rayDir,objects[node.object].inverseModel,objectHit,objectNormal);
-
-
+                hit = intersectSphere(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit, objectNormal);
 
             if(hit && objectHit > 0.0 && objectHit < closestHit)
             {
@@ -194,11 +193,10 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
         {
             if(node.left >= 0)
                 stack[stackPtr++] = node.left;
-
             if(node.right >= 0)
                 stack[stackPtr++] = node.right;
         }
-    }
+        }
 
 
     return hitObject >= 0;

@@ -96,6 +96,11 @@
             light.position = glm::vec4(glm::vec3(obj.model[3]), 1.0f);
             light.colorEmission = glm::vec4(obj.color, obj.emission);
 
+            glm::vec3 right = glm::vec3(obj.model[0]);
+            glm::vec3 up = glm::vec3(obj.model[2]);
+
+            light.right = glm::vec4(glm::vec3(obj.model[0]) * 0.5f, 0);
+            light.up = glm::vec4(glm::vec3(obj.model[2]) * 0.5f, 0);
             emissiveLights.push_back(light);
         }
 
@@ -143,6 +148,7 @@
             gpu.inverseModel = glm::inverse(obj.model);
             gpu.color = glm::vec4(obj.color, 1.0f);
             gpu.type = obj.type;
+            gpu.isLight = obj.emission > 0.0f ? 1 : 0;
             gpu.emission = obj.emission;
             gpu.reflectivity = obj.reflectivity;
             gpuObjects.push_back(gpu);

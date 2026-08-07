@@ -39,7 +39,7 @@ float computeShadowForLight(
         float hitDistance;
         vec3 hitNormal;
         bool blocked = traverseBVH(rayOrigin, rayDir, lightDistance, hitObject, hitDistance, hitNormal);
-
+       // bool blocked = false;
         if (!blocked)
             visibility += 1.0;
     }
@@ -60,8 +60,8 @@ float computeShadow(vec3 fragPos, vec3 normal)
         vec3 lightCenter = lights[i].position.xyz;
         float weight = max(lights[i].colorEmission.a, 0.0001);
 
-        vec3 lightRight = vec3(1.0, 0.0, 0.0);
-        vec3 lightUp    = vec3(0.0, 0.0, 0.6);
+        vec3 lightRight = lights[i].right.xyz;
+        vec3 lightUp    = lights[i].up.xyz;
 
         float vis = computeShadowForLight(fragPos, normal, lightCenter, lightRight, lightUp);
 

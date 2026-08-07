@@ -3,20 +3,12 @@
 
 #include "lights.glsl"
 
-
 struct LightingResult
 {
     vec3 color;
     vec3 diffuse;
     vec3 specular;
 };
-struct LightingResult
-{
-    vec3 color;
-    vec3 diffuse;
-    vec3 specular;
-};
-
 
 LightingResult evaluateLighting(
     vec3 fragPos,
@@ -37,23 +29,25 @@ LightingResult evaluateLighting(
 
     for (int i = 0; i < lightCount; i++)
     {
-        vec3 lightPos      = lights[i].position.xyz;
-        vec3 lightColor    = lights[i].colorEmission.rgb;
-        float lightEmission = lights[i].colorEmission.a;
+        vec3 lightPos       = lights[i].position.xyz;
+        vec3 lightColor     = lights[i].colorEmission.rgb;
+
+        float lightEmission = lights[i].colorEmission.a ;
 
         vec3 lightVector = lightPos - fragPos;
-        float distance = length(lightVector);
-        vec3 lightDir = normalize(lightVector);
+        float distance   = length(lightVector);
+        vec3 lightDir    = normalize(lightVector);
 
         float ndotl = dot(normal, lightDir);
-        float diff = smoothstep(-0.3, 0.8, ndotl);
+        float diff  = smoothstep(-0.3, 0.8, ndotl);
+
         float attenuation = 1.0 / (1.0 + 0.35 * distance + 0.18 * distance * distance);
 
         vec3 diffuseTerm = diff * albedo * lightColor * lightEmission;
 
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float shininess = 96.0;
-        float specBase = pow(max(dot(normal, halfwayDir), 0.0), shininess);
+        float specBase  = pow(max(dot(normal, halfwayDir), 0.0), shininess);
         float specStrength = mix(0.15, 1.0, reflectivity);
         vec3 specularTerm = lightColor * specBase * specStrength * lightEmission;
 
