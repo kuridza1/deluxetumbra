@@ -37,13 +37,14 @@ vec3 traceReflection(vec3 origin, vec3 direction)
 
         vec3 baseColor = objects[hitObject].color.rgb;
         float emission = objects[hitObject].emission;
+        
+        float refl = objects[hitObject].reflectivity;
         if(emission > 0.0)
         {
-            return vec3(10.0, 0.0, 0.0);
+            result += throughput * baseColor * emission;
+            break;
         }
-        float refl = objects[hitObject].reflectivity;
-
-        float shadow = computeShadow(hitPos, hitNormal);  
+        float shadow = computeShadow(hitPos, hitNormal);
 
 
         vec3 direct = evaluateLighting(
@@ -53,7 +54,7 @@ vec3 traceReflection(vec3 origin, vec3 direction)
             vec3(0.0),
             refl,
             hitPos - direction,
-            1.0,
+            shadow,
             1.0
         ).color;
 

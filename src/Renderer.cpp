@@ -269,19 +269,25 @@ void Renderer::reflectionPass(const glm::vec3& viewPos)
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bvh.bvhSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, bvh.objectSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, bvh.lightSSBO);
 
+    glUniform1i(glGetUniformLocation(reflectionShader->ID, "lightCount"), (int)bvh.emissiveLights.size());
     glUniform3fv(glGetUniformLocation(reflectionShader->ID, "viewPos"), 1, glm::value_ptr(viewPos));
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gPosition);
     glUniform1i(glGetUniformLocation(reflectionShader->ID, "gPosition"), 0);
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gNormal);
     glUniform1i(glGetUniformLocation(reflectionShader->ID, "gNormal"), 1);
+
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, gbuffer.gReflectivity);
     glUniform1i(glGetUniformLocation(reflectionShader->ID, "gReflectivity"), 4);
+
     glBindImageTexture(0, reflectionTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
     glDispatchCompute((screenWidth + 15) / 16, (screenHeight + 15) / 16, 1);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);

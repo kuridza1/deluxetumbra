@@ -167,7 +167,7 @@ void Scene::buildScene(BVH& bvh)
     addObject(m, glm::vec3(1.0f), 0.0f, 0.3f);
 
     // Light
-    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.4f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
+    m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 4.45f, 0.0f)), glm::vec3(1.8f, 0.1f, 1.8f));
     addObject(m, glm::vec3(1.0f, 0.88f, 0.70f), 5.0f, 0.0f);
 
     // Left wall

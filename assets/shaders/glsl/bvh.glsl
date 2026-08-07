@@ -200,5 +200,57 @@ bool traverseBVH(vec3 rayOrigin, vec3 rayDir, float maxDistance, out int hitObje
     return hitObject >= 0;
 }
 
+bool traverseBVHShadow(vec3 rayOrigin, vec3 rayDir, float maxDistance)
+{
+    int stack[64];
+    int stackPtr = 0;
+
+    stack[stackPtr++] = 0;
+
+    float closestHit = maxDistance;
+
+    while(stackPtr > 0)
+    {
+        int nodeIndex = stack[--stackPtr];
+        BVHNode node = nodes[nodeIndex];
+
+        float nodeHit;
+        vec3 dummyNormal;
+
+        if(!intersectAABB(rayOrigin, rayDir, node.min.xyz, node.max.xyz, nodeHit, dummyNormal))
+            continue;
+
+        if(nodeHit > closestHit)
+            continue;
+
+        if(node.leaf == 1)
+        {
+            if(objects[node.object].isLight == 1)
+                continue;
+
+            float objectHit;
+            vec3 objectNormal;
+            bool hit = false;
+
+            if(objects[node.object].type == 0)
+                hit = intersectBox(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit, objectNormal);
+            else
+                hit = intersectSphere(rayOrigin, rayDir, objects[node.object].inverseModel, objectHit, objectNormal);
+
+            if(hit && objectHit > 0.0 && objectHit < closestHit)
+                return true;
+        }
+        else
+        {
+            if(node.left >= 0)
+                stack[stackPtr++] = node.left;
+
+            if(node.right >= 0)
+                stack[stackPtr++] = node.right;
+        }
+    }
+
+    return false;
+}
 
 #endif
