@@ -17,8 +17,7 @@ LightingResult evaluateLighting(
     vec3 emission,
     float reflectivity,
     vec3 viewPos,
-    float shadow,
-    float ao)
+    float shadow)
 {
     LightingResult result;
     result.diffuse  = vec3(0.0);
@@ -60,7 +59,7 @@ LightingResult evaluateLighting(
     float shadowSoft = smoothstep(0.15, 1.0, shadow);
     direct *= mix(0.05, 1.0, shadowSoft);
 
-    result.color  = albedo * 0.12 * ao;
+    result.color  = albedo * 0.12;
     result.color += direct;
     result.color += emission;
 

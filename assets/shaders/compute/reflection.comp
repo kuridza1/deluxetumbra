@@ -54,8 +54,7 @@ vec3 traceReflection(vec3 origin, vec3 direction)
             vec3(0.0),
             refl,
             hitPos - direction,
-            shadow,
-            1.0
+            shadow
         ).color;
 
         result += throughput * direct;

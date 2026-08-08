@@ -12,7 +12,6 @@ uniform sampler2D gAlbedo;
 uniform sampler2D gEmission;
 uniform sampler2D gReflectivity;
 uniform sampler2D shadowMask;
-uniform sampler2D aoMask;
 uniform sampler2D reflectionTexture;
 
 uniform vec3 lightPos;
@@ -28,11 +27,9 @@ void main()
     vec3 emission = texture(gEmission, TexCoords).rgb;
     float reflectivity = texture(gReflectivity, TexCoords).r;
     float shadow = texture(shadowMask, TexCoords).r;
-    float ao = texture(aoMask, TexCoords).r;
 
     if (renderMode == 1 ){
         shadow = 1.0;
-        ao = 1.0;
     }
     
 
@@ -44,8 +41,7 @@ void main()
         emission,
         reflectivity,
         viewPos,
-        shadow,
-        ao);
+        shadow);
     
 
     vec3 result = lighting.color;

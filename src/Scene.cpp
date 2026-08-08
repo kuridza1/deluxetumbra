@@ -186,9 +186,9 @@ void Scene::buildScene(BVH& bvh)
     /*m = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 2.5f)), glm::vec3(5.0f, 5.0f, 0.02f));
     addObject(m, glm::vec3(0.8f), 0.0f, 0.0f);*/
 
-    // Small box
+    //// Small box
     //m = glm::mat4(1.0f);
-    //m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 1.0f));
+    //m = glm::translate(m, glm::vec3(-0.9f, 0.27f, 0.5f));
     //m = glm::rotate(m, glm::radians(20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     //m = glm::scale(m, glm::vec3(1.5f));
     //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
@@ -207,7 +207,7 @@ void Scene::buildScene(BVH& bvh)
     //m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.5f));
     //addObject(m, glm::vec3(0.85f), 0.0f, 0.0f);
 
-    // Sphere 1
+    //// Sphere 1
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(-1.0f, 0.0f, 1.0f));
     m = glm::scale(m, glm::vec3(1.0f));
@@ -223,7 +223,7 @@ void Scene::buildScene(BVH& bvh)
     m = glm::mat4(1.0f);
     m = glm::translate(m, glm::vec3(1.3f, -0.12f, 1.4f));
     m = glm::scale(m, glm::vec3(0.7f));
-    addObject(m, glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 0.5f, Sphere);
+    addObject(m, glm::vec3(1.0f, 1.0f, 0.0f), 0.0f, 0.5f, Sphere);
 
     bvh.buildBVH(0, bvh.shadowObjects.size());
     bvh.uploadBVH();

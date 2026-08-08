@@ -51,7 +51,7 @@ int main()
     glEnable(GL_MULTISAMPLE);
     glViewport(0, 0, mode->width, mode->height);
 
-    Camera       camera;
+    Camera       camera(glm::vec3(0.0f, 2.0f, 8.79583f));
     InputHandler input;
     Renderer     renderer;
 
@@ -64,7 +64,6 @@ int main()
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
-	glm::vec3 lightPos(0.0f, 4.0f, 0.0f);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -73,7 +72,6 @@ int main()
         lastFrame  = currentFrame;
 
         input.processKeyboard(window, deltaTime);
-
         glm::mat4 view       = camera.GetViewMatrix();
         glm::mat4 projection = camera.GetProjectionMatrix((float)mode->width / mode->height);
 
@@ -83,13 +81,11 @@ int main()
         if (renderer.getRenderMode() == RenderMode::Shadows)
         {
             renderer.shadowPass();
-            //renderer.aoPass(lightPos);
         }
 
         if (renderer.getRenderMode() == RenderMode::Reflections)
         {
             renderer.shadowPass();
-			//renderer.aoPass(lightPos);
             renderer.reflectionPass(camera.Position);
             renderer.denoisePass();
         }

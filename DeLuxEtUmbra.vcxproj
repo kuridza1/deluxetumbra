@@ -156,13 +156,11 @@
     <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\shaders\compute\ao.comp" />
     <None Include="assets\shaders\compute\denoise.comp" />
     <None Include="assets\shaders\compute\reflection.comp" />
     <None Include="assets\shaders\compute\shadow.comp" />
     <None Include="assets\shaders\geometry.frag" />
     <None Include="assets\shaders\geometry.vert" />
-    <None Include="assets\shaders\glsl\ao.glsl" />
     <None Include="assets\shaders\glsl\bvh.glsl" />
     <None Include="assets\shaders\glsl\lights.glsl" />
     <None Include="assets\shaders\glsl\lighting.glsl" />

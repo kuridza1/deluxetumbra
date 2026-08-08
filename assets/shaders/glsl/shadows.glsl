@@ -45,7 +45,7 @@ float computeShadow(vec3 fragPos, vec3 normal)
             vec3 rayDir = toLight / lightDistance;
 
             float NdotL = max(dot(normal, rayDir), 0.05);
-            float bias = min(0.02 / NdotL, 0.08);
+            float bias = min(0.02 / NdotL, 0.03);
 
             vec3 rayOrigin = fragPos + normal * bias;
 
